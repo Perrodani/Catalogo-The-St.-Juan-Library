@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Catálogo de Audiolibros</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-hover: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-award: #f59e0b;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
+    .container { max-width: 1300px; margin: 0 auto; }
+    
+    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+    h1 { font-size: 1.8rem; display: flex; align-items: center; gap: 10px; color: var(--accent); }
+    
+    .toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 25px; }
+    .search-box { flex: 1 1 280px; position: relative; }
+    .search-box input { width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 1rem; }
+    .search-box input:focus { outline: 2px solid var(--accent); }
+    
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    select, button.btn-filter { padding: 10px 14px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: white; cursor: pointer; font-size: 0.9rem; }
+    button.btn-filter.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+    
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s, background 0.2s; position: relative; cursor: pointer; }
+    .card:hover { transform: translateY(-4px); background: var(--card-hover); }
+    
+    .cover-wrapper { height: 260px; background: #020617; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .cover-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+    .placeholder-cover { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.85rem; height: 100%; }
+    .placeholder-cover span { font-size: 2.5rem; margin-bottom: 8px; }
+    
+    .badge-award { position: absolute; top: 10px; right: 10px; background: rgba(245, 158, 11, 0.95); color: #000; font-size: 0.75rem; font-weight: bold; padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+    .badge-narrators { position: absolute; bottom: 10px; left: 10px; background: rgba(15, 23, 42, 0.85); color: var(--accent); font-size: 0.75rem; font-weight: bold; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--accent); }
+    
+    .card-body { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
+    .author { color: var(--accent); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+    .title { font-size: 1.1rem; font-weight: bold; margin-bottom: 6px; line-height: 1.3; }
+    .series { font-size: 0.85rem; color: #cbd5e1; margin-bottom: 10px; font-style: italic; }
+    .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+    .tag { background: #0f172a; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; color: var(--text-muted); border: 1px solid var(--border); }
+    .summary { font-size: 0.85rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
+    .modal { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; max-width: 650px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 25px; position: relative; }
+    .modal-close { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+    .modal-award { color: var(--accent-award); font-weight: bold; margin-bottom: 10px; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; }
+    .modal-narrators-list { margin-top: 15px; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; }
+    .modal-narrators-list li { margin-left: 20px; margin-top: 5px; color: #cbd5e1; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>🎧 Mi Catálogo de Audiolibros</h1>
+      <div id="stats" style="color: var(--text-muted); font-size: 0.95rem;">Cargando colección...</div>
+    </header>
+
+    <div class="toolbar">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar por título, autor, saga o palabra clave...">
+      </div>
+      <div class="filters">
+        <button class="btn-filter" id="filterAwardBtn">🏆 Solo Premiados</button>
+        <button class="btn-filter" id="filterNarratorsBtn">🎙️ Varias Versiones</button>
+        <select id="genreSelect">
+          <option value="">Todos los géneros</option>
+        </select>
+        <select id="sortSelect">
+          <option value="title">Ordenar por Título</option>
+          <option value="author">Ordenar por Autor</option>
+          <option value="award">Premios primero</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid" id="audiobookGrid"></div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <div id="modalAward" class="modal-award"></div>
+      <div id="modalAuthor" class="author"></div>
+      <h2 id="modalTitle" style="margin-bottom: 5px;"></h2>
+      <div id="modalSeries" class="series"></div>
+      <div id="modalTags" class="tags" style="margin: 10px 0;"></div>
+      <p id="modalSummary" style="margin-top: 15px; font-size: 0.95rem; line-height: 1.6;"></p>
+      <div id="modalNarrators" class="modal-narrators-list"></div>
+    </div>
+  </div>
+
+  <script src="catalogo_datos.js"></script>
+
+  <script>
+    let audiobooks = (typeof DATOS_AUDIOLIBROS !== 'undefined') ? DATOS_AUDIOLIBROS : [];
+    let filterAwardOnly = false;
+    let filterNarratorsOnly = false;
+
+    const grid = document.getElementById('audiobookGrid');
+    const searchInput = document.getElementById('searchInput');
+    const genreSelect = document.getElementById('genreSelect');
+    const sortSelect = document.getElementById('sortSelect');
+    const filterAwardBtn = document.getElementById('filterAwardBtn');
+    const filterNarratorsBtn = document.getElementById('filterNarratorsBtn');
+    const stats = document.getElementById('stats');
+
+    function populateGenres() {
+      genreSelect.innerHTML = '<option value="">Todos los géneros</option>';
+      const allGenres = [...new Set(audiobooks.flatMap(b => b.genres || []))].sort();
+      allGenres.forEach(g => {
+        if (!g) return;
+        const opt = document.createElement('option');
+        opt.value = g;
+        opt.textContent = g;
+        genreSelect.appendChild(opt);
+      });
+    }
+
+    function render() {
+      const search = searchInput.value.toLowerCase();
+      const genre = genreSelect.value;
+      const sort = sortSelect.value;
+
+      let filtered = audiobooks.filter(b => {
+        const title = (b.title || '').toLowerCase();
+        const author = (b.author || '').toLowerCase();
+        const series = (b.series || '').toLowerCase();
+        const summary = (b.summary || '').toLowerCase();
+
+        const matchSearch = title.includes(search) || author.includes(search) || series.includes(search) || summary.includes(search);
+        const matchGenre = !genre || (b.genres && b.genres.includes(genre));
+        const matchAward = !filterAwardOnly || (b.award && b.award.length > 0);
+        const matchNarrators = !filterNarratorsOnly || (b.narrators && b.narrators.length > 1);
+
+        return matchSearch && matchGenre && matchAward && matchNarrators;
+      });
+
+      filtered.sort((a, b) => {
+        if (sort === 'title') return (a.title || '').localeCompare(b.title || '');
+        if (sort === 'author') return (a.author || '').localeCompare(b.author || '');
+        if (sort === 'award') return (b.award ? 1 : 0) - (a.award ? 1 : 0);
+        return 0;
+      });
+
+      stats.textContent = `${filtered.length} de ${audiobooks.length} audiolibros`;
+      grid.innerHTML = '';
+
+      filtered.forEach(book => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.onclick = () => openModal(book);
+
+        const awardBadge = book.award ? `<span class="badge-award">${book.award.split(' ')[0]} Premiado</span>` : '';
+        const narratorsBadge = (book.narrators && book.narrators.length > 1) 
+          ? `<span class="badge-narrators">🎙️ ${book.narrators.length} versiones</span>` : '';
+
+        const coverSrc = book.cover ? book.cover : '';
+
+        card.innerHTML = `
+          <div class="cover-wrapper">
+            <img src="${coverSrc}" alt="${book.title}" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="placeholder-cover" style="${coverSrc ? 'display: none;' : 'display: flex;'}">
+              <span>📖</span>
+              <strong>${book.title}</strong>
+              <small>${book.author}</small>
+            </div>
+            ${awardBadge}
+            ${narratorsBadge}
+          </div>
+          <div class="card-body">
+            <div class="author">${book.author}</div>
+            <div class="title">${book.title}</div>
+            <div class="series">${book.series || 'Independiente'}</div>
+            <div class="tags">
+              ${(book.genres || []).map(g => `<span class="tag">${g}</span>`).join('')}
+            </div>
+            <div class="summary">${book.summary || ''}</div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalClose = document.getElementById('modalClose');
+
+    function openModal(book) {
+      document.getElementById('modalAuthor').textContent = book.author;
+      document.getElementById('modalTitle').textContent = book.title;
+      document.getElementById('modalSeries').textContent = book.series || 'Independiente';
+      document.getElementById('modalSummary').textContent = book.summary || 'Sin sinopsis disponible.';
+      document.getElementById('modalAward').textContent = book.award || '';
+      document.getElementById('modalTags').innerHTML = (book.genres || []).map(g => `<span class="tag">${g}</span>`).join('');
+      
+      const narratorsDiv = document.getElementById('modalNarrators');
+      if (book.narrators && book.narrators.length > 0) {
+        narratorsDiv.style.display = 'block';
+        narratorsDiv.innerHTML = `<strong>Versiones / Narradores:</strong><ul>${book.narrators.map(n => `<li>${n}</li>`).join('')}</ul>`;
+      } else {
+        narratorsDiv.style.display = 'none';
+      }
+
+      modalOverlay.style.display = 'flex';
+    }
+
+    modalClose.onclick = () => modalOverlay.style.display = 'none';
+    modalOverlay.onclick = (e) => { if (e.target === modalOverlay) modalOverlay.style.display = 'none'; };
+
+    searchInput.oninput = render;
+    genreSelect.onchange = render;
+    sortSelect.onchange = render;
+
+    filterAwardBtn.onclick = () => {
+      filterAwardOnly = !filterAwardOnly;
+      filterAwardBtn.classList.toggle('active', filterAwardOnly);
+      render();
+    };
+
+    filterNarratorsBtn.onclick = () => {
+      filterNarratorsOnly = !filterNarratorsOnly;
+      filterNarratorsBtn.classList.toggle('active', filterNarratorsOnly);
+      render();
+    };
+
+    populateGenres();
+    render();
+  </script>
+</body>
+</html>
