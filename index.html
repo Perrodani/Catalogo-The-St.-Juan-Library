@@ -105,7 +105,7 @@
   <script src="catalogo_datos.js"></script>
 
   <script>
-    let audiobooks = (typeof DATOS_AUDIOLIBROS !== 'undefined') ? DATOS_AUDIOLIBROS : [];
+    let audiobooks = (typeof DATOS_AUDIOLIBROS !== 'undefined') ? DATOS_AUDIOLIBROS : (typeof catalogo !== 'undefined') ? catalogo : (typeof catalogo !== 'undefined') ? catalogo : [];
     let filterAwardOnly = false;
     let filterNarratorsOnly = false;
 
