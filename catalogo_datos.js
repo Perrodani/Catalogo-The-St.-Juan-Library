@@ -1,4 +1,4 @@
-const DATOS_AUDIOLIBROS = [
+const catalogo = [
   {
     "title": "El Hombre De La Mascara De Hierro",
     "author": "Alejandro Dumas",
@@ -15735,7 +15735,7 @@ const DATOS_AUDIOLIBROS = [
       "Romántica"
     ],
     "award": "",
-    "cover": ""cover": "covers/portada1.jpg",",
+    "cover": "covers/perd_neme__padre____noelia_medina.jpg",
     "summary": "El padre Adrián hace mucho tiempo que consideró su culpa redimida. Sus malos hábitos, sus adicciones y sus para nada aconsejables compañías lo llevaron al abismo. Por suerte, justo antes de caer, encontró en la religión su lugar seguro. Y su tapadera perfecta. Año tras año, todo ha funcionado, todo ha estado en calma. Hasta que una joven novicia aparece con una cara angelical y una boca de pecado para estropear su estabilidad. Catrina necesita ingresar en ese convento y destapar lo que sea que ocurre allí dentro, pues de ello depende su supervivencia. Aunque su misión implique a un hombre prohibido y posiblemente peligroso ahora que está en el momento más duro de su vida: en plena desintoxicación de su mala relación con el sexo, las sustancias y la noche. ¿Lo único bueno? Que perdida en un pueblo diminuto de Portugal e interna en un convento, se mantendrá aislada de todo lo que conoce y a kilómetros de su antigua vida. Allí, despojada de sus pertenencias, solo podrá entregarse a Dios. No sabe que su Dios está más cerca de lo que cree, mide un metro ochenta, tiene los ojos verdes como un peligroso lago, una boca sucia e intenciones oscuras que nublarán la búsqueda de su luz.",
     "narrators": [
       "Miriam Chaves, Carlos Quintero"
