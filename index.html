@@ -247,5 +247,40 @@
     populateGenres();
     render();
   </script>
-<div class="modal-bg" id="mBg"><div class="modal-box"><button class="modal-close" onclick="document.getElementById('mBg').style.display='none'">×</button><h2 id="mTitle" style="margin-bottom:8px"></h2><p id="mMeta" style="color:#94a3b8;margin-bottom:12px;line-height:1.6"></p><p id="mDesc" style="line-height:1.6;color:#cbd5e1;max-height:280px;overflow-y:auto"></p></div></div></body>
+<div class="modal-bg" id="mBg"><div class="modal-box"><button class="modal-close" onclick="document.getElementById('mBg').style.display='none'">×</button><h2 id="mTitle" style="margin-bottom:8px"></h2><p id="mMeta" style="color:#94a3b8;margin-bottom:12px;line-height:1.6"></p><p id="mDesc" style="line-height:1.6;color:#cbd5e1;max-height:280px;overflow-y:auto"></p></div></div><script>
+function formatearDuracion(s) {
+  if (!s || isNaN(s)) return "-";
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+function abrirFicha(b) {
+  const mBg = document.getElementById("mBg");
+  if (!mBg) return;
+  document.getElementById("mTitle").textContent = b.title || "Sin titulo";
+  const meta = document.getElementById("mMeta");
+  const dur = b.duration ? formatearDuracion(b.duration) : (b.durationFormatted || "-");
+  const narr = (b.narrators && b.narrators.length) ? b.narrators.join(", ") : "No especificado";
+  const serie = b.series || "Independiente";
+  meta.innerHTML = `<strong>Autor:</strong> ${b.author || "Desconocido"}<br><strong>Narrador:</strong> ${narr}<br><strong>Duracion:</strong> ${dur}<br><strong>Serie:</strong> ${serie}`;
+  document.getElementById("mDesc").textContent = b.summary || "Sinopsis no disponible en Audiobookshelf.";
+  mBg.style.display = "flex";
+}
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const mBg = document.getElementById("mBg");
+    if (mBg) mBg.style.display = "none";
+  }
+});
+setTimeout(() => {
+  document.querySelectorAll(".card, .book-card, [onclick]").forEach((c, idx) => {
+    const list = (typeof catalogo !== "undefined" ? catalogo : (typeof audiolibros !== "undefined" ? audiolibros : (typeof books !== "undefined" ? books : [])));
+    if (list[idx]) {
+      c.style.cursor = "pointer";
+      c.addEventListener("click", () => abrirFicha(list[idx]));
+    }
+  });
+}, 800);
+</script>
+</body>
 </html>
