@@ -305,5 +305,54 @@ function filtrarCatalogo() {
   if (rc) rc.textContent = q ? `${visibles} encontrados` : "";
 }
 </script>
-<script src="modulos_extra.js"></script></body>
+<script src="modulos_extra.js"></script><script>
+function poblarSagas() {
+  const sel = document.getElementById('sagaSel');
+  if (!sel || typeof DATOS_AUDIOLIBROS === 'undefined') return;
+  const sagas = new Set();
+  DATOS_AUDIOLIBROS.forEach(b => {
+    const s = (b.series || '').trim();
+    if (s && s.toLowerCase() !== 'independiente') sagas.add(s);
+  });
+  sel.innerHTML = '<option value="">Todas las sagas</option>';
+  Array.from(sagas).sort((a, b) => a.localeCompare(b)).forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    sel.appendChild(opt);
+  });
+}
+function exportarCSV() {
+  if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS.length) {
+    alert('Cargando audiolibros...'); return;
+  }
+  const sea = document.getElementById('searchInput');
+  const q = sea ? sea.value.toLowerCase().trim() : '';
+  const sel = document.getElementById('sagaSel');
+  const saga = sel ? sel.value : '';
+  let list = DATOS_AUDIOLIBROS.filter(b => {
+    const t = (b.title || '').toLowerCase();
+    const a = (b.author || '').toLowerCase();
+    const s = (b.series || '');
+    return (!q || t.includes(q) || a.includes(q)) && (!saga || s === saga);
+  });
+  let csv = '﻿Titulo;Autor;Saga;Generos
+';
+  list.forEach(b => {
+    const t = '"' + ^(b.title ^|^| ''^).replace^(/"/g, '""') + '"';
+    const a = '"' + ^(b.author ^|^| ''^).replace^(/"/g, '""') + '"';
+    const s = '"' + ^(b.series ^|^| ''^).replace^(/"/g, '""') + '"';
+    const g = '"' + ^(b.genres ? b.genres.join^(', '^) : ''^).replace^(/"/g, '""') + '"';
+    csv += t + ';' + a + ';' + s + ';' + g + '
+';
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'catalogo_audiolibros.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+window.addEventListener('load', ()=> setTimeout(poblarSagas, 600));
+setTimeout(poblarSagas, 1200);
+</script>
+</body>
 </html>
