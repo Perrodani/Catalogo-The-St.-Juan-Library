@@ -74,10 +74,10 @@
   <div class="container">
     <header>
       <h1>The St. Juan Library • Audiobook Catalogue</h1>
-      <div id="stats" style="color: var(--text-muted); font-size: 0.95rem;">Cargando colección...<select id="sagaSel" onchange="filtrarCatalogo()" style="background:#151d30;color:#f8fafc;border:1px solid #1e293b;padding:8px;border-radius:6px;"><option value="">Todas las sagas</option></select><button onclick="exportarCSV()" style="background:#1e293b;color:#38bdf8;border:1px solid #334155;padding:8px 12px;border-radius:6px;cursor:pointer;">CSV</button></div>
+      <div id="stats" style="color: var(--text-muted); font-size: 0.95rem;">Cargando colección...</div>
     </header>
 
-    <div class="toolbar">
+    <div class="toolbar"> <select id="sagaSel" onchange="filtrarCatalogo()" style="background:#151d30;color:#f8fafc;border:1px solid #334155;padding:8px 12px;border-radius:8px;font-size:0.9rem;outline:none;"><option value="">Todas las sagas</option></select> <button onclick="exportarCSV()" style="background:#0284c7;color:#ffffff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.9rem;">✵ Descargar CSV</button>
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="Buscar por título, autor, saga o palabra clave...">
       </div>
