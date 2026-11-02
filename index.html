@@ -114,6 +114,62 @@
   <script src="catalogo_datos.js"></script>
 
   
-<script src="modulos.js"></script>
+
+<script>
+function poblarSagas() {
+  var sel = document.getElementById('sagaSel');
+  if (!sel || typeof DATOS_AUDIOLIBROS === 'undefined') return;
+  var sagas = new Set();
+  for (var i = 0; i < DATOS_AUDIOLIBROS.length; i++) {
+    var s = (DATOS_AUDIOLIBROS[i].series || '').trim();
+    if (s && s.toLowerCase() !== 'independiente') sagas.add(s);
+  }
+  sel.innerHTML = '<option value="">Todas las sagas</option>';
+  var arr = Array.from(sagas).sort(function(a, b) { return a.localeCompare(b); });
+  for (var j = 0; j < arr.length; j++) {
+    var opt = document.createElement('option');
+    opt.value = arr[j];
+    opt.textContent = arr[j];
+    sel.appendChild(opt);
+  }
+}
+
+function exportarCSV() {
+  if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS.length) {
+    alert('Cargando audiolibros...');
+    return;
+  }
+  var sea = document.getElementById('searchInput');
+  var q = sea ? sea.value.toLowerCase().trim() : '';
+  var sel = document.getElementById('sagaSel');
+  var saga = sel ? sel.value : '';
+  var csv = '\uFEFFTitulo;Autor;Saga;Generos\r\n';
+  for (var i = 0; i < DATOS_AUDIOLIBROS.length; i++) {
+    var b = DATOS_AUDIOLIBROS[i];
+    var t = (b.title || '').toLowerCase();
+    var a = (b.author || '').toLowerCase();
+    var s = (b.series || '');
+    if ((!q || t.indexOf(q) !== -1 || a.indexOf(q) !== -1) && (!saga || s === saga)) {
+      var tit = '"' + (b.title || '').replace(/"/g, '""') + '"';
+      var aut = '"' + (b.author || '').replace(/"/g, '""') + '"';
+      var sag = '"' + (b.series || '').replace(/"/g, '""') + '"';
+      var gen = '"' + (b.genres ? b.genres.join(', ') : '') + '"';
+      csv += tit + ';' + aut + ';' + sag + ';' + gen + '\r\n';
+    }
+  }
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement('a');
+  link.href = url;
+  link.download = 'catalogo_audiolibros.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+window.addEventListener('DOMContentLoaded', poblarSagas);
+setTimeout(poblarSagas, 1000);
+setTimeout(poblarSagas, 2500);
+</script>
 </body>
 </html>
