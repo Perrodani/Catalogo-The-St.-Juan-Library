@@ -282,5 +282,28 @@ setTimeout(() => {
   });
 }, 800);
 </script>
+<script>
+function filtrarCatalogo() {
+  const q = document.getElementById("searchInput").value.toLowerCase().trim();
+  const cards = document.querySelectorAll(".card, .book-card");
+  const list = (typeof catalogo !== "undefined" ? catalogo : (typeof audiolibros !== "undefined" ? audiolibros : (typeof books !== "undefined" ? books : [])));
+  let visibles = 0;
+  cards.forEach((c, idx) => {
+    const b = list[idx];
+    if (!b) return;
+    const t = (b.title || "").toLowerCase();
+    const a = (b.author || "").toLowerCase();
+    const n = (b.narrators ? b.narrators.join(" ") : "").toLowerCase();
+    if (!q || t.includes(q) || a.includes(q) || n.includes(q)) {
+      c.style.display = "";
+      visibles++;
+    } else {
+      c.style.display = "none";
+    }
+  });
+  const rc = document.getElementById("resCount");
+  if (rc) rc.textContent = q ? `${visibles} encontrados` : "";
+}
+</script>
 </body>
 </html>
