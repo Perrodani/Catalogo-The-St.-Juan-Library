@@ -116,9 +116,18 @@
   
 
 
+
 <script>
 function normalizarTexto(txt) {
   return (txt || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function formatearDuracionTotal(segundos) {
+  if (!segundos || isNaN(segundos)) return '';
+  var dias = Math.floor(segundos / 86400);
+  var horas = Math.floor((segundos % 86400) / 3600);
+  if (dias > 0) return dias + ' días y ' + horas + ' horas';
+  return horas + ' horas';
 }
 
 function formatearDuracion(segundos) {
@@ -150,15 +159,13 @@ function poblarSagas() {
 }
 
 function renderizarCatalogo() {
-  var contenedor = document.getElementById('catalogo') || document.getElementById('libros') || document.getElementById('grid') || document.querySelector('.grid') || document.querySelector('.catalogo');
-  var mensaje = document.getElementById('mensajeCargando') || document.getElementById('cargando') || document.querySelector('.cargando');
+  var stats = document.getElementById('stats');
+  var contenedor = document.getElementById('catalogo') || document.getElementById('libros') || document.getElementById('grid') || document.querySelector('.grid') || document.querySelector('.catalogo') || document.querySelector('main');
   
   if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS.length) {
-    if (mensaje) mensaje.textContent = 'No hay libros disponibles en este momento.';
+    if (stats) stats.textContent = 'No se pudieron cargar los audiolibros.';
     return;
   }
-  
-  if (mensaje) mensaje.style.display = 'none';
 
   var inputBusqueda = document.getElementById('searchInput') || document.getElementById('buscador');
   var selSaga = document.getElementById('sagaSel');
@@ -166,7 +173,9 @@ function renderizarCatalogo() {
   var q = inputBusqueda ? normalizarTexto(inputBusqueda.value) : '';
   var sagaFiltro = selSaga ? selSaga.value : '';
 
+  var duracionTotal = 0;
   var filtrados = DATOS_AUDIOLIBROS.filter(function(b) {
+    if (b.duration) duracionTotal += b.duration;
     var t = normalizarTexto(b.title);
     var a = normalizarTexto(b.author);
     var n = normalizarTexto(b.narrator);
@@ -176,8 +185,10 @@ function renderizarCatalogo() {
     return coincideTexto && coincideSaga;
   });
 
-  var contador = document.getElementById('contador') || document.getElementById('totalLibros');
-  if (contador) contador.textContent = filtrados.length + ' de ' + DATOS_AUDIOLIBROS.length + ' audiolibros';
+  if (stats) {
+    var tiempoStr = formatearDuracionTotal(duracionTotal);
+    stats.textContent = filtrados.length + ' de ' + DATOS_AUDIOLIBROS.length + ' audiolibros' + (tiempoStr ? ' • ' + tiempoStr : '');
+  }
 
   if (!contenedor) return;
 
@@ -207,6 +218,8 @@ function renderizarCatalogo() {
 
   contenedor.innerHTML = html;
 }
+
+window.filtrarCatalogo = renderizarCatalogo;
 
 function exportarCSV() {
   if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS.length) {
@@ -260,8 +273,8 @@ function inicializarTodo() {
 }
 
 window.addEventListener('DOMContentLoaded', inicializarTodo);
-setTimeout(inicializarTodo, 500);
-setTimeout(inicializarTodo, 1500);
+setTimeout(inicializarTodo, 200);
+setTimeout(inicializarTodo, 1000);
 </script>
 </body>
 </html>
