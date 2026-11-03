@@ -135,7 +135,7 @@
       <div id="modalNarrators" class="modal-narrators-list"></div>
     </div>
   </div>
-  <script src="catalogo_datos.js?v=1793741118"></script>
+  <script src="catalogo_datos.js?v=1793741644"></script>
   <script>
 var soloPremiados = false;
 
@@ -238,8 +238,9 @@ window.abrirModalLibro = function(index) {
     mAuthor.textContent = (libro.author || 'Autor desconocido') + dur;
   }
   if (mSeries) {
-    mSeries.textContent = libro.series ? 'Saga: ' + libro.series : '';
-    mSeries.style.display = libro.series ? 'block' : 'none';
+    var esIndependiente = !libro.series || libro.series.trim().toLowerCase() === 'independiente';
+    mSeries.textContent = esIndependiente ? 'Novela autoconclusiva' : 'Saga: ' + libro.series;
+    mSeries.style.display = 'block';
   }
   if (mSummary) {
     mSummary.textContent = libro.summary || libro.description || 'Sin descripción disponible.';
@@ -390,6 +391,7 @@ function renderizarCatalogo() {
     var portada = libro.cover || 'covers/default.jpg';
     var premioItem = (libro.award || libro.awards || '').trim();
     var dur = formatearDuracion(libro.duration);
+    var sVal = (libro.series || '').trim();
     
     html += '<div class="card" onclick="abrirModalLibro(' + origIdx + ')">';
     html += '  <div class="cover-wrapper">';
@@ -401,9 +403,13 @@ function renderizarCatalogo() {
     html += '  <div class="card-body">';
     html += '    <div class="title" title="' + (libro.title || '') + '">' + (libro.title || 'Sin título') + '</div>';
     html += '    <div class="author">' + (libro.author || 'Autor desconocido') + '</div>';
-    if (libro.series) {
-      html += '    <div class="series">' + libro.series + '</div>';
+    
+    if (!sVal || sVal.toLowerCase() === 'independiente') {
+      html += '    <div class="series" style="opacity: 0.75; font-style: italic;">Novela autoconclusiva</div>';
+    } else {
+      html += '    <div class="series">' + sVal + '</div>';
     }
+    
     if (dur) {
       html += '    <div style="display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 2px 8px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⏱ ' + dur + '</div>';
     }
@@ -463,6 +469,7 @@ if (document.readyState === 'loading') {
 }
 setTimeout(inicializarTodo, 150);
 setTimeout(inicializarTodo, 600);
+
   </script>
 </body>
 </html>
