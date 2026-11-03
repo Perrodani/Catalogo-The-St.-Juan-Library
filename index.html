@@ -113,6 +113,8 @@
 
   <script src="catalogo_datos.js"></script>
 <script>
+var soloPremiados = false;
+
 function normalizarTexto(txt) {
   return (txt || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
@@ -133,24 +135,66 @@ function formatearDuracionTotal(segundos) {
   return horas + ' horas';
 }
 
-function poblarSagas() {
-  var sel = document.getElementById('sagaSel');
-  if (!sel || typeof DATOS_AUDIOLIBROS === 'undefined') return;
-  var sagas = new Set();
-  for (var i = 0; i < DATOS_AUDIOLIBROS.length; i++) {
-    var s = (DATOS_AUDIOLIBROS[i].series || '').trim();
-    if (s && s.toLowerCase() !== 'independiente') sagas.add(s);
+function poblarSelectores() {
+  if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS.length) return;
+
+  // 1. Selector de Sagas
+  var selSaga = document.getElementById('sagaSel');
+  if (selSaga && selSaga.options.length <= 1) {
+    var sagas = new Set();
+    for (var i = 0; i < DATOS_AUDIOLIBROS.length; i++) {
+      var s = (DATOS_AUDIOLIBROS[i].series || '').trim();
+      if (s && s.toLowerCase() !== 'independiente') sagas.add(s);
+    }
+    var actualSaga = selSaga.value;
+    selSaga.innerHTML = '<option value="">Todas las sagas</option>';
+    var arrSagas = Array.from(sagas).sort(function(a, b) { return a.localeCompare(b); });
+    for (var j = 0; j < arrSagas.length; j++) {
+      var optS = document.createElement('option');
+      optS.value = arrSagas[j];
+      optS.textContent = arrSagas[j];
+      selSaga.appendChild(optS);
+    }
+    if (actualSaga) selSaga.value = actualSaga;
   }
-  var actual = sel.value;
-  sel.innerHTML = '<option value="">Todas las sagas</option>';
-  var arr = Array.from(sagas).sort(function(a, b) { return a.localeCompare(b); });
-  for (var j = 0; j < arr.length; j++) {
-    var opt = document.createElement('option');
-    opt.value = arr[j];
-    opt.textContent = arr[j];
-    sel.appendChild(opt);
+
+  // 2. Selector de Géneros
+  var selGenre = document.getElementById('genreSelect');
+  if (selGenre && selGenre.options.length <= 1) {
+    var generos = new Set();
+    for (var k = 0; k < DATOS_AUDIOLIBROS.length; k++) {
+      var gList = DATOS_AUDIOLIBROS[k].genres || [];
+      if (typeof gList === 'string') gList = [gList];
+      for (var gi = 0; gi < gList.length; gi++) {
+        var gItem = (gList[gi] || '').trim();
+        if (gItem) generos.add(gItem);
+      }
+    }
+    var actualGenre = selGenre.value;
+    selGenre.innerHTML = '<option value="">Todos los géneros</option>';
+    var arrGen = Array.from(generos).sort(function(a, b) { return a.localeCompare(b); });
+    for (var m = 0; m < arrGen.length; m++) {
+      var optG = document.createElement('option');
+      optG.value = arrGen[m];
+      optG.textContent = arrGen[m];
+      selGenre.appendChild(optG);
+    }
+    if (actualGenre) selGenre.value = actualGenre;
   }
-  if (actual) sel.value = actual;
+
+  // 3. Selector de Ordenación (si está vacío, se añaden las opciones)
+  var selSort = document.getElementById('sortSelect');
+  if (selSort && selSort.options.length <= 1) {
+    var actualSort = selSort.value;
+    selSort.innerHTML = 
+      '<option value="title_asc">Título (A - Z)</option>' +
+      '<option value="title_desc">Título (Z - A)</option>' +
+      '<option value="author_asc">Autor (A - Z)</option>' +
+      '<option value="author_desc">Autor (Z - A)</option>' +
+      '<option value="duration_desc">Duración (Mayor a Menor)</option>' +
+      '<option value="duration_asc">Duración (Menor a Mayor)</option>';
+    if (actualSort) selSort.value = actualSort;
+  }
 }
 
 window.abrirModalLibro = function(index) {
@@ -204,6 +248,24 @@ window.cerrarModal = function() {
   }
 };
 
+window.togglePremiados = function() {
+  soloPremiados = !soloPremiados;
+  var btnPremio = document.getElementById('filterAwardBtn');
+  if (btnPremio) {
+    btnPremio.classList.toggle('active', soloPremiados);
+    if (soloPremiados) {
+      btnPremio.style.borderColor = '#f59e0b';
+      btnPremio.style.color = '#f59e0b';
+      btnPremio.style.background = 'rgba(245, 158, 11, 0.15)';
+    } else {
+      btnPremio.style.borderColor = '';
+      btnPremio.style.color = '';
+      btnPremio.style.background = '';
+    }
+  }
+  renderizarCatalogo();
+};
+
 function renderizarCatalogo() {
   var grid = document.getElementById('audiobookGrid') || document.querySelector('.grid');
   var stats = document.getElementById('stats');
@@ -215,26 +277,61 @@ function renderizarCatalogo() {
 
   var inputBusqueda = document.getElementById('searchInput');
   var selSaga = document.getElementById('sagaSel');
+  var selGenre = document.getElementById('genreSelect');
+  var selSort = document.getElementById('sortSelect');
   
   var q = inputBusqueda ? normalizarTexto(inputBusqueda.value) : '';
   var sagaFiltro = selSaga ? selSaga.value : '';
+  var generoFiltro = selGenre ? selGenre.value : '';
+  var criterioOrden = selSort && selSort.value ? selSort.value : 'title_asc';
 
-  var duracionTotal = 0;
   var filtrados = [];
   
   for (var idx = 0; idx < DATOS_AUDIOLIBROS.length; idx++) {
     var b = DATOS_AUDIOLIBROS[idx];
-    if (b.duration) duracionTotal += b.duration;
-    var t = normalizarTexto(b.title);
-    var a = normalizarTexto(b.author);
+    
+    if (soloPremiados && !b.award) continue;
+
     var s = (b.series || '').trim();
-    
-    var coincideTexto = !q || t.indexOf(q) !== -1 || a.indexOf(q) !== -1;
-    var coincideSaga = !sagaFiltro || s === sagaFiltro;
-    
-    if (coincideTexto && coincideSaga) {
-      filtrados.push({ libro: b, originalIndex: idx });
+    if (sagaFiltro && s !== sagaFiltro) continue;
+
+    if (generoFiltro) {
+      var gList = b.genres || [];
+      if (typeof gList === 'string') gList = [gList];
+      var tieneGenero = false;
+      for (var gi = 0; gi < gList.length; gi++) {
+        if (gList[gi] === generoFiltro) { tieneGenero = true; break; }
+      }
+      if (!tieneGenero) continue;
     }
+
+    if (q) {
+      var t = normalizarTexto(b.title);
+      var a = normalizarTexto(b.author);
+      var sag = normalizarTexto(b.series);
+      var sum = normalizarTexto(b.summary || b.description || '');
+      if (t.indexOf(q) === -1 && a.indexOf(q) === -1 && sag.indexOf(q) === -1 && sum.indexOf(q) === -1) {
+        continue;
+      }
+    }
+
+    filtrados.push({ libro: b, originalIndex: idx });
+  }
+
+  filtrados.sort(function(a, b) {
+    var la = a.libro;
+    var lb = b.libro;
+    if (criterioOrden === 'title_desc') return (lb.title || '').localeCompare(la.title || '');
+    if (criterioOrden === 'author_asc') return (la.author || '').localeCompare(lb.author || '');
+    if (criterioOrden === 'author_desc') return (lb.author || '').localeCompare(la.author || '');
+    if (criterioOrden === 'duration_desc') return (lb.duration || 0) - (la.duration || 0);
+    if (criterioOrden === 'duration_asc') return (la.duration || 0) - (lb.duration || 0);
+    return (la.title || '').localeCompare(lb.title || '');
+  });
+
+  var duracionTotal = 0;
+  for (var d = 0; d < filtrados.length; d++) {
+    if (filtrados[d].libro.duration) duracionTotal += filtrados[d].libro.duration;
   }
 
   if (stats) {
@@ -254,6 +351,9 @@ function renderizarCatalogo() {
     
     html += '<div class="card" onclick="abrirModalLibro(' + origIdx + ')">';
     html += '  <div class="cover-wrapper">';
+    if (libro.award) {
+      html += '    <div style="position: absolute; top: 8px; right: 8px; background: rgba(245, 158, 11, 0.9); color: #000; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; z-index: 2;">🏆 Premiado</div>';
+    }
     html += '    <img src="' + portada + '" alt="' + (libro.title || '') + '" onerror="this.parentElement.innerHTML=\'<div class=\\\'placeholder-cover\\\'><span>🎧</span><div>Sin portada</div></div>\'" loading="lazy">';
     html += '  </div>';
     html += '  <div class="card-body">';
@@ -270,7 +370,7 @@ function renderizarCatalogo() {
   }
 
   if (filtrados.length === 0) {
-    html = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-muted, #888);">No se encontraron audiolibros.</div>';
+    html = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-muted, #888);">No se encontraron audiolibros con los filtros aplicados.</div>';
   }
 
   grid.innerHTML = html;
@@ -279,19 +379,37 @@ function renderizarCatalogo() {
 window.filtrarCatalogo = renderizarCatalogo;
 
 function inicializarTodo() {
-  poblarSagas();
+  poblarSelectores();
   renderizarCatalogo();
   
   var sea = document.getElementById('searchInput');
   if (sea && !sea.dataset.escuchando) {
-    sea.addEventListener('input', renderizarCatalogo);
+    sea.oninput = renderizarCatalogo;
     sea.dataset.escuchando = 'true';
   }
   
-  var sel = document.getElementById('sagaSel');
-  if (sel && !sel.dataset.escuchando) {
-    sel.addEventListener('change', renderizarCatalogo);
-    sel.dataset.escuchando = 'true';
+  var selSaga = document.getElementById('sagaSel');
+  if (selSaga && !selSaga.dataset.escuchando) {
+    selSaga.onchange = renderizarCatalogo;
+    selSaga.dataset.escuchando = 'true';
+  }
+
+  var selGenre = document.getElementById('genreSelect');
+  if (selGenre && !selGenre.dataset.escuchando) {
+    selGenre.onchange = renderizarCatalogo;
+    selGenre.dataset.escuchando = 'true';
+  }
+
+  var selSort = document.getElementById('sortSelect');
+  if (selSort && !selSort.dataset.escuchando) {
+    selSort.onchange = renderizarCatalogo;
+    selSort.dataset.escuchando = 'true';
+  }
+
+  var btnPremio = document.getElementById('filterAwardBtn');
+  if (btnPremio && !btnPremio.dataset.escuchando) {
+    btnPremio.onclick = window.togglePremiados;
+    btnPremio.dataset.escuchando = 'true';
   }
 
   var btnCerrar = document.getElementById('modalClose');
@@ -308,8 +426,9 @@ function inicializarTodo() {
 }
 
 window.addEventListener('DOMContentLoaded', inicializarTodo);
-setTimeout(inicializarTodo, 150);
-setTimeout(inicializarTodo, 800);
+setTimeout(inicializarTodo, 100);
+setTimeout(inicializarTodo, 500);
+setTimeout(inicializarTodo, 1200);
 </script>
 </body>
 </html>
