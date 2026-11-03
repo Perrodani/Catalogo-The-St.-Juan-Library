@@ -153,6 +153,42 @@ function poblarSagas() {
   if (actual) sel.value = actual;
 }
 
+window.mostrarSinopsis = function(index) {
+  if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS[index]) return;
+  var libro = DATOS_AUDIOLIBROS[index];
+  var modal = document.getElementById('modal-sinopsis');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-sinopsis';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+    modal.onclick = function(e) { if (e.target === modal) modal.style.display = 'none'; };
+    document.body.appendChild(modal);
+  }
+
+  var dur = libro.duration ? formatearDuracion(libro.duration) : '';
+  var generos = libro.genres ? (Array.isArray(libro.genres) ? libro.genres.join(', ') : libro.genres) : '';
+  var desc = libro.summary || libro.description || 'Sin descripción disponible.';
+
+  modal.innerHTML = 
+    '<div style="background:#1e293b;color:#f8fafc;max-width:600px;width:100%;max-height:85vh;border-radius:12px;overflow-y:auto;padding:24px;position:relative;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);font-family:inherit;">' +
+      '<button onclick="document.getElementById(\'modal-sinopsis\').style.display=\'none\'" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#94a3b8;font-size:24px;cursor:pointer;line-height:1;">&times;</button>' +
+      '<div style="display:flex;gap:20px;flex-wrap:wrap;">' +
+        '<img src="' + (libro.cover || '') + '" onerror="this.style.display=\'none\'" style="width:130px;height:180px;object-fit:cover;border-radius:8px;background:#334155;flex-shrink:0;">' +
+        '<div style="flex:1;min-width:200px;">' +
+          '<h2 style="margin:0 0 8px 0;font-size:1.25rem;line-height:1.3;">' + (libro.title || 'Sin título') + '</h2>' +
+          '<p style="margin:0 0 6px 0;color:#38bdf8;font-weight:600;">' + (libro.author || 'Autor desconocido') + '</p>' +
+          (libro.series ? '<p style="margin:0 0 6px 0;color:#fbbf24;font-size:0.9rem;">Saga: ' + libro.series + '</p>' : '') +
+          (dur ? '<p style="margin:0 0 6px 0;color:#94a3b8;font-size:0.85rem;">⏱ ' + dur + '</p>' : '') +
+          (generos ? '<p style="margin:0 0 6px 0;color:#94a3b8;font-size:0.85rem;">🏷️ ' + generos + '</p>' : '') +
+        '</div>' +
+      '</div>' +
+      '<hr style="border:0;border-top:1px solid #334155;margin:18px 0;">' +
+      '<div style="line-height:1.6;font-size:0.95rem;color:#cbd5e1;white-space:pre-wrap;">' + desc + '</div>' +
+    '</div>';
+
+  modal.style.display = 'flex';
+};
+
 function renderizarCatalogo() {
   var stats = document.getElementById('stats');
   var contenedor = document.getElementById('catalogo') || document.getElementById('libros') || document.getElementById('grid') || document.querySelector('.grid') || document.querySelector('.catalogo') || document.querySelector('main');
@@ -169,7 +205,10 @@ function renderizarCatalogo() {
   var sagaFiltro = selSaga ? selSaga.value : '';
 
   var duracionTotal = 0;
-  var filtrados = DATOS_AUDIOLIBROS.filter(function(b) {
+  var filtrados = [];
+  
+  for (var idx = 0; idx < DATOS_AUDIOLIBROS.length; idx++) {
+    var b = DATOS_AUDIOLIBROS[idx];
     if (b.duration) duracionTotal += b.duration;
     var t = normalizarTexto(b.title);
     var a = normalizarTexto(b.author);
@@ -177,8 +216,10 @@ function renderizarCatalogo() {
     var s = (b.series || '').trim();
     var coincideTexto = !q || t.indexOf(q) !== -1 || a.indexOf(q) !== -1 || n.indexOf(q) !== -1;
     var coincideSaga = !sagaFiltro || s === sagaFiltro;
-    return coincideTexto && coincideSaga;
-  });
+    if (coincideTexto && coincideSaga) {
+      filtrados.push({ libro: b, originalIndex: idx });
+    }
+  }
 
   if (stats) {
     var tiempoStr = formatearDuracionTotal(duracionTotal);
@@ -189,21 +230,24 @@ function renderizarCatalogo() {
 
   var html = '';
   for (var i = 0; i < filtrados.length; i++) {
-    var libro = filtrados[i];
-    var portada = libro.cover || 'portadas/' + (libro.id || i) + '.jpg';
+    var item = filtrados[i];
+    var libro = item.libro;
+    var origIdx = item.originalIndex;
+    var portada = libro.cover || 'portadas/' + origIdx + '.jpg';
     var dur = libro.duration ? formatearDuracion(libro.duration) : '';
     
-    html += '<div class="libro-card" style="border: 1px solid #333; border-radius: 8px; overflow: hidden; background: #1a1a1a; margin: 10px; display: inline-block; vertical-align: top; width: 200px; text-align: center; color: #fff;">';
+    html += '<div class="libro-card" onclick="mostrarSinopsis(' + origIdx + ')" style="border: 1px solid #334155; border-radius: 8px; overflow: hidden; background: #1e293b; margin: 10px; display: inline-block; vertical-align: top; width: 200px; text-align: center; color: #fff; cursor: pointer; transition: transform 0.15s, border-color 0.15s;" onmouseover="this.style.borderColor=\'#38bdf8\'" onmouseout="this.style.borderColor=\'#334155\'">';
     html += '<img src="' + portada + '" alt="' + (libro.title || '') + '" onerror="this.src=\'data:image/svg+xml;utf8,<svg xmlns=\\\'http://www.w3.org/2000/svg\\\' width=\\\'200\\\' height=\\\'200\\\' fill=\\\'%23333\\\'><rect width=\\\'100%\\\' height=\\\'100%\\\'/><text x=\\\'50%\\\' y=\\\'50%\\\' fill=\\\'%23888\\\' text-anchor=\\\'middle\\\'>Sin portada</text></svg>\'" style="width: 100%; height: 260px; object-fit: cover;">';
     html += '<div style="padding: 10px; font-size: 13px;">';
     html += '<div style="font-weight: bold; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="' + (libro.title || '') + '">' + (libro.title || 'Sin título') + '</div>';
-    html += '<div style="color: #aaa; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + (libro.author || 'Desconocido') + '</div>';
+    html += '<div style="color: #94a3b8; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + (libro.author || 'Desconocido') + '</div>';
     if (libro.series) {
-      html += '<div style="color: #e5a00d; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + libro.series + '</div>';
+      html += '<div style="color: #fbbf24; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + libro.series + '</div>';
     }
     if (dur) {
-      html += '<div style="color: #777; font-size: 11px; margin-top: 4px;">⏱ ' + dur + '</div>';
+      html += '<div style="color: #64748b; font-size: 11px; margin-top: 4px;">⏱ ' + dur + '</div>';
     }
+    html += '<button onclick="event.stopPropagation(); mostrarSinopsis(' + origIdx + ')" style="margin-top: 8px; background: #0f172a; border: 1px solid #334155; color: #38bdf8; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; width: 100%;">📖 Ver sinopsis</button>';
     html += '</div></div>';
   }
 
@@ -226,7 +270,7 @@ function exportarCSV() {
   var sel = document.getElementById('sagaSel');
   var saga = sel ? sel.value : '';
   
-  var csv = '\uFEFFTitulo;Autor;Saga;Generos\r\n';
+  var csv = '\uFEFFTitulo;Autor;Saga;Generos;Sinopsis\r\n';
   for (var i = 0; i < DATOS_AUDIOLIBROS.length; i++) {
     var b = DATOS_AUDIOLIBROS[i];
     var t = normalizarTexto(b.title);
@@ -237,7 +281,8 @@ function exportarCSV() {
       var aut = '"' + (b.author || '').replace(/"/g, '""') + '"';
       var sag = '"' + (b.series || '').replace(/"/g, '""') + '"';
       var gen = '"' + (b.genres ? (Array.isArray(b.genres) ? b.genres.join(', ') : b.genres) : '').replace(/"/g, '""') + '"';
-      csv += tit + ';' + aut + ';' + sag + ';' + gen + '\r\n';
+      var sum = '"' + (b.summary || '').replace(/"/g, '""').replace(/\r?\n/g, ' ') + '"';
+      csv += tit + ';' + aut + ';' + sag + ';' + gen + ';' + sum + '\r\n';
     }
   }
   var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
