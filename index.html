@@ -135,9 +135,8 @@
       <div id="modalNarrators" class="modal-narrators-list"></div>
     </div>
   </div>
-
-  <script src="catalogo_datos.js?v=1793740179"></script>
-<script>
+  <script src="catalogo_datos.js?v=1793741118"></script>
+  <script>
 var soloPremiados = false;
 
 function normalizarTexto(txt) {
@@ -145,17 +144,19 @@ function normalizarTexto(txt) {
 }
 
 function formatearDuracion(segundos) {
-  if (!segundos || isNaN(segundos)) return '';
-  var hrs = Math.floor(segundos / 3600);
-  var min = Math.floor((segundos % 3600) / 60);
+  var s = parseFloat(segundos);
+  if (!s || isNaN(s) || s <= 0) return '';
+  var hrs = Math.floor(s / 3600);
+  var min = Math.floor((s % 3600) / 60);
   if (hrs > 0) return hrs + ' h ' + (min > 0 ? min + ' min' : '');
   return min + ' min';
 }
 
 function formatearDuracionTotal(segundos) {
-  if (!segundos || isNaN(segundos)) return '';
-  var dias = Math.floor(segundos / 86400);
-  var horas = Math.floor((segundos % 86400) / 3600);
+  var s = parseFloat(segundos);
+  if (!s || isNaN(s) || s <= 0) return '';
+  var dias = Math.floor(s / 86400);
+  var horas = Math.floor((s % 86400) / 3600);
   if (dias > 0) return dias + ' días y ' + horas + ' horas';
   return horas + ' horas';
 }
@@ -163,7 +164,6 @@ function formatearDuracionTotal(segundos) {
 function poblarSelectores() {
   if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS.length) return;
 
-  // 1. Selector de Sagas
   var selSaga = document.getElementById('sagaSel');
   if (selSaga && selSaga.options.length <= 1) {
     var sagas = new Set();
@@ -183,7 +183,6 @@ function poblarSelectores() {
     if (actualSaga) selSaga.value = actualSaga;
   }
 
-  // 2. Selector de Géneros
   var selGenre = document.getElementById('genreSelect');
   if (selGenre && selGenre.options.length <= 1) {
     var generos = new Set();
@@ -207,7 +206,6 @@ function poblarSelectores() {
     if (actualGenre) selGenre.value = actualGenre;
   }
 
-  // 3. Selector de Ordenación (agrega opciones de duración)
   var selSort = document.getElementById('sortSelect');
   if (selSort && !selSort.querySelector('option[value="duration_desc"]')) {
     var opt1 = document.createElement('option');
@@ -348,7 +346,8 @@ function renderizarCatalogo() {
       }
     }
 
-    if (b.duration) duracionTotal += b.duration;
+    var durSeg = parseFloat(b.duration) || 0;
+    duracionTotal += durSeg;
     filtrados.push({ libro: b, originalIndex: idx });
   }
 
@@ -366,17 +365,19 @@ function renderizarCatalogo() {
       return (la.title || '').localeCompare(lb.title || '');
     }
     if (criterioOrden === 'duration_desc') {
-      return (lb.duration || 0) - (la.duration || 0);
+      return (parseFloat(lb.duration) || 0) - (parseFloat(la.duration) || 0);
     }
     if (criterioOrden === 'duration_asc') {
-      return (la.duration || 0) - (lb.duration || 0);
+      return (parseFloat(la.duration) || 0) - (parseFloat(lb.duration) || 0);
     }
     return (la.title || '').localeCompare(lb.title || '');
   });
 
   if (stats) {
     var tiempoStr = formatearDuracionTotal(duracionTotal);
-    stats.textContent = filtrados.length + ' de ' + DATOS_AUDIOLIBROS.length + ' audiolibros' + (tiempoStr ? ' • ⏱ ' + tiempoStr : '') + (soloPremiados ? ' (Solo Premiados)' : '');
+    stats.innerHTML = '<strong>' + filtrados.length + '</strong> de ' + DATOS_AUDIOLIBROS.length + ' audiolibros' + 
+      (tiempoStr ? ' <span style="margin: 0 6px; opacity: 0.5;">•</span> <span style="color: #38bdf8; font-weight: 600;">⏱ ' + tiempoStr + '</span>' : '') + 
+      (soloPremiados ? ' <span style="color: #f59e0b; font-weight: 600;">(Solo Premiados)</span>' : '');
   }
 
   if (!grid) return;
@@ -388,7 +389,7 @@ function renderizarCatalogo() {
     var origIdx = item.originalIndex;
     var portada = libro.cover || 'covers/default.jpg';
     var premioItem = (libro.award || libro.awards || '').trim();
-    var dur = libro.duration ? formatearDuracion(libro.duration) : '';
+    var dur = formatearDuracion(libro.duration);
     
     html += '<div class="card" onclick="abrirModalLibro(' + origIdx + ')">';
     html += '  <div class="cover-wrapper">';
@@ -404,7 +405,7 @@ function renderizarCatalogo() {
       html += '    <div class="series">' + libro.series + '</div>';
     }
     if (dur) {
-      html += '    <div style="color: #64748b; font-size: 0.78rem; font-weight: 500; margin-top: 4px;">⏱ ' + dur + '</div>';
+      html += '    <div style="display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 2px 8px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⏱ ' + dur + '</div>';
     }
     html += '  </div>';
     html += '</div>';
@@ -462,6 +463,6 @@ if (document.readyState === 'loading') {
 }
 setTimeout(inicializarTodo, 150);
 setTimeout(inicializarTodo, 600);
-</script>
+  </script>
 </body>
 </html>
