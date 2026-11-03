@@ -252,22 +252,25 @@ function renderizarCatalogo() {
     var portada = libro.cover || 'covers/default.jpg';
     var dur = libro.duration ? formatearDuracion(libro.duration) : '';
     
-    html += '<div class="libro-card" onclick="abrirModalLibro(' + origIdx + ')" style="cursor: pointer;">';
-    html += '<img src="' + portada + '" alt="' + (libro.title || '') + '" onerror="this.src=\'data:image/svg+xml;utf8,<svg xmlns=\\\'http://www.w3.org/2000/svg\\\' width=\\\'200\\\' height=\\\'200\\\' fill=\\\'%231e293b\\\'><rect width=\\\'100%\\\' height=\\\'100%\\\'/><text x=\\\'50%\\\' y=\\\'50%\\\' fill=\\\'%2364748b\\\' text-anchor=\\\'middle\\\'>Sin portada</text></svg>\'" loading="lazy">';
-    html += '<div class="info" style="padding: 10px;">';
-    html += '<div class="title" style="font-weight: 600; font-size: 14px; margin-bottom: 4px;" title="' + (libro.title || '') + '">' + (libro.title || 'Sin título') + '</div>';
-    html += '<div class="author" style="color: #94a3b8; font-size: 12px;">' + (libro.author || 'Autor desconocido') + '</div>';
+    html += '<div class="card" onclick="abrirModalLibro(' + origIdx + ')">';
+    html += '  <div class="cover-wrapper">';
+    html += '    <img src="' + portada + '" alt="' + (libro.title || '') + '" onerror="this.parentElement.innerHTML=\'<div class=\\\'placeholder-cover\\\'><span>🎧</span><div>Sin portada</div></div>\'" loading="lazy">';
+    html += '  </div>';
+    html += '  <div class="card-body">';
+    html += '    <div class="title" style="font-weight: 600; font-size: 1rem; margin-bottom: 6px; line-height: 1.3;" title="' + (libro.title || '') + '">' + (libro.title || 'Sin título') + '</div>';
+    html += '    <div class="author" style="color: var(--text-muted, #94a3b8); font-size: 0.85rem; margin-bottom: 4px;">' + (libro.author || 'Autor desconocido') + '</div>';
     if (libro.series) {
-      html += '<div class="series" style="color: #fbbf24; font-size: 11px; margin-top: 2px;">' + libro.series + '</div>';
+      html += '    <div class="series" style="color: #fbbf24; font-size: 0.8rem; margin-top: 2px;">' + libro.series + '</div>';
     }
     if (dur) {
-      html += '<div style="color: #64748b; font-size: 11px; margin-top: 3px;">⏱ ' + dur + '</div>';
+      html += '    <div style="color: var(--text-muted, #64748b); font-size: 0.75rem; margin-top: 6px;">⏱ ' + dur + '</div>';
     }
-    html += '</div></div>';
+    html += '  </div>';
+    html += '</div>';
   }
 
   if (filtrados.length === 0) {
-    html = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: #888;">No se encontraron audiolibros.</div>';
+    html = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-muted, #888);">No se encontraron audiolibros.</div>';
   }
 
   grid.innerHTML = html;
