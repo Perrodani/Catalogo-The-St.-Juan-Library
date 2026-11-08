@@ -3,473 +3,393 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The St. Juan Library • Audiobook Catalogue</title>
+  <title>The St. Juan Library</title>
   <style>
     :root {
       --bg: #0f172a;
       --card-bg: #1e293b;
-      --card-hover: #334155;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --accent: #38bdf8;
-      --accent-award: #f59e0b;
-      --border: #334155;
+      --border: rgba(255, 255, 255, 0.1);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
-    .container { max-width: 1300px; margin: 0 auto; }
-    
-    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
-    h1 { font-size: 1.8rem; display: flex; align-items: center; gap: 10px; color: var(--accent); }
-    
-    .toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 25px; }
-    .search-box { flex: 1 1 280px; position: relative; }
-    .search-box input { width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 1rem; }
-    .search-box input:focus { outline: 2px solid var(--accent); }
-    
-    .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-    select, button.btn-filter { padding: 10px 14px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: white; cursor: pointer; font-size: 0.9rem; }
-    button.btn-filter.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
-    
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-    
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s, background 0.2s; position: relative; cursor: pointer; }
-    .card:hover { transform: translateY(-4px); background: var(--card-hover); }
-    
-    .cover-wrapper { height: 260px; background: #020617; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .cover-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-    .placeholder-cover { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.85rem; height: 100%; }
-    .placeholder-cover span { font-size: 2.5rem; margin-bottom: 8px; }
-    
-    .badge-award { position: absolute; top: 10px; right: 10px; background: rgba(245, 158, 11, 0.95); color: #000; font-size: 0.75rem; font-weight: bold; padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
-    .badge-narrators { position: absolute; bottom: 10px; left: 10px; background: rgba(15, 23, 42, 0.85); color: var(--accent); font-size: 0.75rem; font-weight: bold; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--accent); }
-    
-    .card-body { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
-    .author { color: var(--accent); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
-    .title { font-size: 1.1rem; font-weight: bold; margin-bottom: 6px; line-height: 1.3; }
-    .series { font-size: 0.85rem; color: #cbd5e1; margin-bottom: 10px; font-style: italic; }
-    .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
-    .tag { background: #0f172a; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; color: var(--text-muted); border: 1px solid var(--border); }
-    .summary { font-size: 0.85rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
-    .modal { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; max-width: 650px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 25px; position: relative; }
-    .modal-close { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
-    .modal-award { color: var(--accent-award); font-weight: bold; margin-bottom: 10px; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; }
-    .modal-narrators-list { margin-top: 15px; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; }
-    .modal-narrators-list li { margin-left: 20px; margin-top: 5px; color: #cbd5e1; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+    }
+    header {
+      max-width: 1400px;
+      margin: 0 auto 20px auto;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.2rem;
+      color: #ef4444;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    #stats {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 20px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 25px;
+    }
+    input[type="text"], select, button {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input[type="text"] { width: 320px; max-width: 100%; }
+    input[type="text"]:focus, select:focus { border-color: var(--accent); }
+    button { cursor: pointer; font-weight: 600; }
+    button:hover { background: #334155; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .cover-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 100%;
+      background: #0f172a;
+    }
+    .cover-wrapper img {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .placeholder-cover {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 0.85rem;
+    }
+    .placeholder-cover span { font-size: 2.5rem; margin-bottom: 6px; }
+    .card-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+    .title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      line-height: 1.3;
+      margin-bottom: 6px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .author {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .series {
+      font-size: 0.8rem;
+      color: #38bdf8;
+      margin-bottom: 8px;
+    }
+    .badge-duracion {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      align-self: flex-start;
+      margin-top: auto;
+      padding: 2px 8px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal {
+      background: #1e293b;
+      border-radius: 14px;
+      max-width: 650px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      position: relative;
+      border: 1px solid var(--border);
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .modal h2 { margin-bottom: 8px; font-size: 1.4rem; padding-right: 30px; }
+    .modal-sub { color: var(--accent); margin-bottom: 16px; font-size: 0.95rem; }
+    .modal-summary { font-size: 0.95rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 16px; }
+    .modal-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .modal-tag {
+      background: #334155;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
   </style>
-
-<style>
-.pagination{display:flex;justify-content:center;gap:12px;margin:30px 0;align-items:center;}
-.pagination button{background:#1e293b;color:#f8fafc;border:1px solid #334155;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;}
-.pagination button:disabled{opacity:0.4;cursor:not-allowed;}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;padding:16px;z-index:999;backdrop-filter:blur(3px);}
-.modal-box{background:#111827;border:1px solid #374151;border-radius:12px;max-width:600px;width:100%;padding:24px;position:relative;color:#f8fafc;max-height:85vh;overflow-y:auto;}
-.modal-close{position:absolute;top:12px;right:14px;background:#1f2937;border:none;color:#9ca3af;font-size:1.2rem;width:32px;height:32px;border-radius:50%;cursor:pointer;}
-</style>
-
-<style>
-/* --- MEJORAS VISUALES TARJETAS --- */
-.card { background: #131b2e !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 14px !important; box-shadow: 0 4px 14px rgba(0,0,0,0.3) !important; transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease !important; }
-.card:hover { transform: translateY(-6px) !important; box-shadow: 0 14px 28px rgba(0,0,0,0.55), 0 0 12px rgba(56, 189, 248, 0.2) !important; border-color: rgba(56, 189, 248, 0.35) !important; }
-.cover-wrapper { height: 270px !important; background: #080d1a !important; position: relative !important; overflow: hidden !important; }
-.cover-wrapper img { width: 100% !important; height: 100% !important; object-fit: cover !important; transition: transform 0.3s ease !important; }
-.card:hover .cover-wrapper img { transform: scale(1.03) !important; }
-.card-body { padding: 14px 16px !important; display: flex !important; flex-direction: column !important; gap: 4px !important; }
-.card-body .title { font-weight: 700 !important; font-size: 0.98rem !important; line-height: 1.35 !important; color: #f8fafc !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.card-body .author { color: #94a3b8 !important; font-size: 0.85rem !important; font-weight: 500 !important; }
-.card-body .series { color: #38bdf8 !important; font-size: 0.8rem !important; font-weight: 600 !important; background: rgba(56, 189, 248, 0.1) !important; padding: 2px 8px !important; border-radius: 6px !important; display: inline-block !important; width: fit-content !important; margin-top: 4px !important; }
-
-/* --- MEJORAS VISUALES MODAL --- */
-.modal-overlay { background: rgba(8, 13, 26, 0.75) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; z-index: 1000 !important; }
-.modal { background: #131b2e !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 18px !important; box-shadow: 0 25px 60px rgba(0,0,0,0.7) !important; max-width: 680px !important; padding: 32px !important; color: #f8fafc !important; position: relative !important; }
-.modal-close { position: absolute !important; top: 16px !important; right: 18px !important; width: 36px !important; height: 36px !important; border-radius: 50% !important; background: rgba(255,255,255,0.06) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: #cbd5e1 !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 1.2rem !important; cursor: pointer !important; transition: all 0.2s !important; }
-.modal-close:hover { background: rgba(239, 68, 68, 0.2) !important; color: #ef4444 !important; border-color: rgba(239, 68, 68, 0.4) !important; }
-#modalTitle { font-size: 1.45rem !important; font-weight: 800 !important; line-height: 1.3 !important; color: #ffffff !important; margin-bottom: 6px !important; }
-#modalAuthor { font-size: 1.05rem !important; color: #38bdf8 !important; font-weight: 600 !important; margin-bottom: 12px !important; }
-#modalSeries { color: #facc15 !important; font-size: 0.9rem !important; font-weight: 600 !important; margin-bottom: 12px !important; }
-#modalAward { background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(217, 119, 6, 0.1)) !important; border: 1px solid rgba(245, 158, 11, 0.5) !important; color: #fbbf24 !important; padding: 8px 14px !important; border-radius: 8px !important; font-weight: 700 !important; font-size: 0.9rem !important; margin-bottom: 16px !important; width: fit-content !important; }
-#modalSummary { font-size: 0.95rem !important; line-height: 1.68 !important; color: #cbd5e1 !important; max-height: 280px !important; overflow-y: auto !important; padding-right: 8px !important; }
-#modalTags .tag { background: rgba(255,255,255,0.06) !important; border: 1px solid rgba(255,255,255,0.12) !important; color: #94a3b8 !important; border-radius: 6px !important; padding: 3px 10px !important; font-size: 0.8rem !important; font-weight: 500 !important; }
-</style>
 </head>
 <body>
-
-  <div class="container">
-    <header>
-      <h1>The St. Juan Library • Audiobook Catalogue</h1>
-      <div id="stats" style="color: var(--text-muted); font-size: 0.95rem;">Cargando colección...</div>
-    </header>
-
-    <div class="toolbar"> <select id="sagaSel" onchange="filtrarCatalogo()" style="background:#151d30;color:#f8fafc;border:1px solid #334155;padding:8px 12px;border-radius:8px;font-size:0.9rem;outline:none;"><option value="">Todas las sagas</option></select> <button onclick="exportarCSV()" style="background:#0284c7;color:#ffffff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.9rem;">✵ Descargar CSV</button>
-      <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Buscar por título, autor, saga o palabra clave...">
-      </div>
-      <div class="filters">
-        <button class="btn-filter" id="filterAwardBtn">🏆 Solo Premiados</button>
-        <button class="btn-filter" id="filterNarratorsBtn">🎙️ Varias Versiones</button>
-        <select id="genreSelect">
-          <option value="">Todos los géneros</option>
-        </select>
-        <select id="sortSelect">
-          <option value="title">Ordenar por Título</option>
-          <option value="author">Ordenar por Autor</option>
-          <option value="award">Premios primero</option>
-        </select>
-      </div>
+  <header>
+    <h1>The St. Juan Library</h1>
+    <div id="stats">Cargando colección...</div>
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Buscar por título, autor, saga o sinopsis...">
+      <select id="authorSelect"><option value="">Todos los autores</option></select>
+      <select id="sagaSel"><option value="">Todas las sagas</option></select>
+      <select id="genreSelect"><option value="">Todos los géneros</option></select>
+      <select id="sortSelect">
+        <option value="title">Ordenar: Título (A-Z)</option>
+        <option value="author">Ordenar: Autor (A-Z)</option>
+        <option value="duration_desc">Duración: Mayor a Menor</option>
+        <option value="duration_asc">Duración: Menor a Mayor</option>
+        <option value="award">Obras premiadas primero</option>
+      </select>
+      <button id="filterAwardBtn" type="button">🏆 Premiados</button>
     </div>
+  </header>
 
-    <div class="grid" id="audiobookGrid"></div>
-  </div>
+  <div class="grid" id="audiobookGrid"></div>
 
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
       <button class="modal-close" id="modalClose">&times;</button>
-      <div id="modalAward" class="modal-award"></div>
-      <div id="modalAuthor" class="author"></div>
-      <h2 id="modalTitle" style="margin-bottom: 5px;"></h2>
-      <div id="modalSeries" class="series"></div>
-      <div id="modalTags" class="tags" style="margin: 10px 0;"></div>
-      <p id="modalSummary" style="margin-top: 15px; font-size: 0.95rem; line-height: 1.6;"></p>
-      <div id="modalNarrators" class="modal-narrators-list"></div>
+      <h2 id="modalTitle"></h2>
+      <div class="modal-sub" id="modalSub"></div>
+      <div id="modalAward" style="display:none; color: #f59e0b; font-weight: bold; margin-bottom: 12px;"></div>
+      <div class="modal-summary" id="modalSummary"></div>
+      <div class="modal-tags" id="modalTags"></div>
     </div>
   </div>
-  <script src="catalogo_datos.js?v=1794156272"></script>
+
+  <script src="catalogo_datos.js"></script>
   <script>
-var soloPremiados = false;
+    var soloPremiados = false;
+    function normalizar(t){ return (t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
+    function fmtDur(s){ var n=parseFloat(s); if(!n||isNaN(n)||n<=0)return ''; var h=Math.floor(n/3600), m=Math.floor((n%3600)/60); return h>0 ? h+' h '+(m>0?m+' min':'') : m+' min'; }
+    function fmtTotal(s){ var n=parseFloat(s); if(!n||isNaN(n)||n<=0)return ''; var d=Math.floor(n/86400), h=Math.floor((n%86400)/3600); return d>0 ? d+' días y '+h+' horas' : h+' horas'; }
 
-function normalizarTexto(t) {
-  return (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-}
-
-function formatearDuracion(s) {
-  var n = parseFloat(s);
-  if (!n || isNaN(n) || n <= 0) return '';
-  var h = Math.floor(n / 3600);
-  var m = Math.floor((n % 3600) / 60);
-  if (h > 0) return h + ' h ' + (m > 0 ? m + ' min' : '');
-  return m + ' min';
-}
-
-function formatearDuracionTotal(s) {
-  var n = parseFloat(s);
-  if (!n || isNaN(n) || n <= 0) return '';
-  var d = Math.floor(n / 86400);
-  var h = Math.floor((n % 86400) / 3600);
-  if (d > 0) return d + ' dias y ' + h + ' horas';
-  return h + ' horas';
-}
-
-function poblarSelectores() {
-  if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS.length) return;
-
-  var elVers = null;
-  var cand = document.querySelectorAll('button, .tab, .filter-tab, a, div');
-  for (var c = 0; c < cand.length; c++) {
-    var tx = (cand[c].textContent || '').toLowerCase().trim();
-    if (tx.indexOf('varias versiones') !== -1 || (tx.indexOf('versiones') !== -1 && cand[c].children.length === 0)) {
-      elVers = cand[c];
-      break;
-    }
-  }
-
-  var selA = document.getElementById('authorSelect');
-  if (!selA) {
-    selA = document.createElement('select');
-    selA.id = 'authorSelect';
-    var ref = document.getElementById('sagaSel') || document.getElementById('genreSelect');
-    if (ref) {
-      selA.className = ref.className;
-      selA.style.cssText = ref.style.cssText;
-    } else {
-      selA.style.padding = '8px 12px';
-      selA.style.borderRadius = '8px';
-      selA.style.background = '#1e293b';
-      selA.style.color = '#f8fafc';
-      selA.style.border = '1px solid rgba(255,255,255,0.2)';
-      selA.style.fontSize = '0.9rem';
-      selA.style.outline = 'none';
-      selA.style.cursor = 'pointer';
-    }
-
-    if (elVers && elVers.parentNode) {
-      elVers.parentNode.replaceChild(selA, elVers);
-    } else {
-      var cont = document.querySelector('.filters') || document.querySelector('.controls') || (document.getElementById('sagaSel') ? document.getElementById('sagaSel').parentElement : null);
-      if (cont) cont.insertBefore(selA, cont.firstChild);
-    }
-  }
-
-  if (selA && selA.options.length <= 1) {
-    var auts = new Set();
-    for (var a = 0; a < DATOS_AUDIOLIBROS.length; a++) {
-      var au = (DATOS_AUDIOLIBROS[a].author || '').trim();
-      if (au && au.toLowerCase() !== 'desconocido') auts.add(au);
-    }
-    var actA = selA.value;
-    selA.innerHTML = '<option value="">Todos los autores</option>';
-    var listaAutores = Array.from(auts).sort(function(x, y) { return x.localeCompare(y); });
-    for (var i = 0; i < listaAutores.length; i++) {
-      var opt = document.createElement('option');
-      opt.value = listaAutores[i];
-      opt.textContent = listaAutores[i];
-      selA.appendChild(opt);
-    }
-    if (actA) selA.value = actA;
-    selA.onchange = renderizarCatalogo;
-  }
-
-  var selS = document.getElementById('sagaSel');
-  if (selS && selS.options.length <= 1) {
-    var sags = new Set();
-    for (var j = 0; j < DATOS_AUDIOLIBROS.length; j++) {
-      var s = (DATOS_AUDIOLIBROS[j].series || '').trim();
-      if (s && s.toLowerCase() !== 'independiente') sags.add(s);
-    }
-    var actS = selS.value;
-    selS.innerHTML = '<option value="">Todas las sagas</option>';
-    var listaSagas = Array.from(sags).sort(function(x, y) { return x.localeCompare(y); });
-    for (var k = 0; k < listaSagas.length; k++) {
-      var optS = document.createElement('option');
-      optS.value = listaSagas[k];
-      optS.textContent = listaSagas[k];
-      selS.appendChild(optS);
-    }
-    if (actS) selS.value = actS;
-  }
-
-  var selG = document.getElementById('genreSelect');
-  if (selG && selG.options.length <= 1) {
-    var gens = new Set();
-    for (var m = 0; m < DATOS_AUDIOLIBROS.length; m++) {
-      var gl = DATOS_AUDIOLIBROS[m].genres || [];
-      if (typeof gl === 'string') gl = [gl];
-      for (var gi = 0; gi < gl.length; gi++) {
-        var it = (gl[gi] || '').trim();
-        if (it) gens.add(it);
+    function poblar(){
+      if(typeof DATOS_AUDIOLIBROS==='undefined' || !DATOS_AUDIOLIBROS.length) return;
+      
+      var selA = document.getElementById('authorSelect');
+      var auts = new Set();
+      for(var i=0; i<DATOS_AUDIOLIBROS.length; i++){
+        var a = (DATOS_AUDIOLIBROS[i].author||'').trim();
+        if(a && a.toLowerCase()!=='desconocido') auts.add(a);
       }
-    }
-    var actG = selG.value;
-    selG.innerHTML = '<option value="">Todos los generos</option>';
-    var listaGeneros = Array.from(gens).sort(function(x, y) { return x.localeCompare(y); });
-    for (var g = 0; g < listaGeneros.length; g++) {
-      var optG = document.createElement('option');
-      optG.value = listaGeneros[g];
-      optG.textContent = listaGeneros[g];
-      selG.appendChild(optG);
-    }
-    if (actG) selG.value = actG;
-  }
+      Array.from(auts).sort(function(x,y){return x.localeCompare(y);}).forEach(function(x){
+        var o = document.createElement('option'); o.value = x; o.textContent = x; selA.appendChild(o);
+      });
 
-  var selSo = document.getElementById('sortSelect');
-  if (selSo && !selSo.querySelector('option[value="duration_desc"]')) {
-    var o1 = document.createElement('option');
-    o1.value = 'duration_desc';
-    o1.textContent = 'Duracion: Mayor a Menor';
-    selSo.appendChild(o1);
-
-    var o2 = document.createElement('option');
-    o2.value = 'duration_asc';
-    o2.textContent = 'Duracion: Menor a Mayor';
-    selSo.appendChild(o2);
-  }
-}
-
-window.abrirModalLibro = function(idx) {
-  if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS[idx]) return;
-  var lib = DATOS_AUDIOLIBROS[idx];
-  var over = document.getElementById('modalOverlay');
-  var mT = document.getElementById('modalTitle'),
-      mA = document.getElementById('modalAuthor'),
-      mS = document.getElementById('modalSeries'),
-      mSum = document.getElementById('modalSummary'),
-      mAw = document.getElementById('modalAward'),
-      mTa = document.getElementById('modalTags');
-  if (mT) mT.textContent = lib.title || 'Sin titulo';
-  if (mA) {
-    var d = lib.duration ? ' · ⏱ ' + formatearDuracion(lib.duration) : '';
-    mA.textContent = (lib.author || 'Autor desconocido') + d;
-  }
-  if (mS) {
-    var ind = !lib.series || lib.series.trim().toLowerCase() === 'independiente';
-    mS.textContent = ind ? 'Novela autoconclusiva' : 'Saga: ' + lib.series;
-    mS.style.display = 'block';
-  }
-  if (mSum) mSum.textContent = lib.summary || lib.description || 'Sin descripcion disponible.';
-  if (mAw) {
-    var pr = lib.award || lib.awards || '';
-    mAw.textContent = pr ? (pr.indexOf('🏆') !== -1 ? pr : '🏆 ' + pr) : '';
-    mAw.style.display = pr ? 'block' : 'none';
-  }
-  if (mTa) {
-    mTa.innerHTML = '';
-    var gen = lib.genres || [];
-    if (typeof gen === 'string') gen = [gen];
-    for (var g = 0; g < gen.length; g++) {
-      var tg = document.createElement('span');
-      tg.className = 'tag';
-      tg.textContent = gen[g];
-      mTa.appendChild(tg);
-    }
-  }
-  if (over) {
-    over.style.display = 'flex';
-    over.classList.add('active');
-  }
-};
-
-window.cerrarModal = function() {
-  var over = document.getElementById('modalOverlay');
-  if (over) {
-    over.style.display = 'none';
-    over.classList.remove('active');
-  }
-};
-
-window.togglePremiados = function() {
-  soloPremiados = !soloPremiados;
-  var btn = document.getElementById('filterAwardBtn');
-  if (btn) {
-    btn.classList.toggle('active', soloPremiados);
-    btn.style.borderColor = soloPremiados ? '#f59e0b' : '';
-    btn.style.color = soloPremiados ? '#f59e0b' : '';
-    btn.style.background = soloPremiados ? 'rgba(245, 158, 11, 0.25)' : '';
-    btn.style.fontWeight = soloPremiados ? 'bold' : '';
-  }
-  renderizarCatalogo();
-};
-
-function renderizarCatalogo() {
-  var grid = document.getElementById('audiobookGrid') || document.querySelector('.grid');
-  var stats = document.getElementById('stats');
-  if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS.length) {
-    if (stats) stats.textContent = 'Cargando biblioteca...';
-    return;
-  }
-  var inp = document.getElementById('searchInput');
-  var selA = document.getElementById('authorSelect'),
-      selS = document.getElementById('sagaSel'),
-      selG = document.getElementById('genreSelect'),
-      selSo = document.getElementById('sortSelect');
-  var q = inp ? normalizarTexto(inp.value) : '';
-  var fA = selA ? selA.value : '',
-      fS = selS ? selS.value : '',
-      fG = selG ? selG.value : '',
-      ord = (selSo && selSo.value) ? selSo.value : 'title';
-  var res = [], totalS = 0;
-  for (var i = 0; i < DATOS_AUDIOLIBROS.length; i++) {
-    var b = DATOS_AUDIOLIBROS[i];
-    var pr = (b.award || b.awards || '').trim();
-    if (soloPremiados && !pr) continue;
-    if (fA && (b.author || '').trim() !== fA) continue;
-    var sg = (b.series || '').trim();
-    if (fS && sg !== fS) continue;
-    if (fG) {
-      var gl = b.genres || [];
-      if (typeof gl === 'string') gl = [gl];
-      var hasG = false;
-      for (var gi = 0; gi < gl.length; gi++) {
-        if ((gl[gi] || '').trim() === fG) { hasG = true; break; }
+      var selS = document.getElementById('sagaSel');
+      var sags = new Set();
+      for(var j=0; j<DATOS_AUDIOLIBROS.length; j++){
+        var s = (DATOS_AUDIOLIBROS[j].series||'').trim();
+        if(s && s.toLowerCase()!=='independiente') sags.add(s);
       }
-      if (!hasG) continue;
+      Array.from(sags).sort(function(x,y){return x.localeCompare(y);}).forEach(function(x){
+        var o = document.createElement('option'); o.value = x; o.textContent = x; selS.appendChild(o);
+      });
+
+      var selG = document.getElementById('genreSelect');
+      var gens = new Set();
+      for(var k=0; k<DATOS_AUDIOLIBROS.length; k++){
+        var gl = DATOS_AUDIOLIBROS[k].genres||[]; if(typeof gl==='string') gl=[gl];
+        for(var gi=0; gi<gl.length; gi++){ var g=(gl[gi]||'').trim(); if(g) gens.add(g); }
+      }
+      Array.from(gens).sort(function(x,y){return x.localeCompare(y);}).forEach(function(x){
+        var o = document.createElement('option'); o.value = x; o.textContent = x; selG.appendChild(o);
+      });
     }
-    if (q) {
-      var str = normalizarTexto(b.title) + ' ' + normalizarTexto(b.author) + ' ' + normalizarTexto(b.series) + ' ' + normalizarTexto(b.summary || b.description || '');
-      if (str.indexOf(q) === -1) continue;
+
+    function render(){
+      var grid = document.getElementById('audiobookGrid');
+      var stats = document.getElementById('stats');
+      if(typeof DATOS_AUDIOLIBROS==='undefined' || !DATOS_AUDIOLIBROS.length){
+        stats.textContent = 'No se encontraron datos en catalogo_datos.js';
+        return;
+      }
+
+      var q = normalizar(document.getElementById('searchInput').value);
+      var fa = document.getElementById('authorSelect').value;
+      var fs = document.getElementById('sagaSel').value;
+      var fg = document.getElementById('genreSelect').value;
+      var ord = document.getElementById('sortSelect').value;
+
+      var res = [], totSec = 0;
+      for(var i=0; i<DATOS_AUDIOLIBROS.length; i++){
+        var b = DATOS_AUDIOLIBROS[i];
+        var pr = (b.award||b.awards||'').trim();
+        if(soloPremiados && !pr) continue;
+        if(fa && (b.author||'').trim() !== fa) continue;
+        if(fs && (b.series||'').trim() !== fs) continue;
+        if(fg){
+          var gl = b.genres||[]; if(typeof gl==='string') gl=[gl];
+          var tieneG = false;
+          for(var gi=0; gi<gl.length; gi++){ if((gl[gi]||'').trim()===fg){ tieneG=true; break; } }
+          if(!tieneG) continue;
+        }
+        if(q){
+          var full = normalizar(b.title)+' '+normalizar(b.author)+' '+normalizar(b.series)+' '+normalizar(b.summary||b.description||'');
+          if(full.indexOf(q)===-1) continue;
+        }
+        totSec += (parseFloat(b.duration)||0);
+        res.push({ libro: b, idx: i });
+      }
+
+      res.sort(function(a, b){
+        var la = a.libro, lb = b.libro;
+        if(ord==='author') return (la.author||'').localeCompare(lb.author||'');
+        if(ord==='duration_desc') return (parseFloat(lb.duration)||0) - (parseFloat(la.duration)||0);
+        if(ord==='duration_asc') return (parseFloat(la.duration)||0) - (parseFloat(lb.duration)||0);
+        if(ord==='award'){
+          var pa = (la.award||la.awards||'').trim()?1:0, pb = (lb.award||lb.awards||'').trim()?1:0;
+          if(pa!==pb) return pb-pa;
+        }
+        return (la.title||'').localeCompare(lb.title||'');
+      });
+
+      var txtT = fmtTotal(totSec);
+      stats.innerHTML = '<strong>' + res.length + '</strong> de ' + DATOS_AUDIOLIBROS.length + ' audiolibros' + 
+        (txtT ? ' <span style="margin: 0 6px; opacity: 0.4;">•</span> <span style="color: #38bdf8; font-weight: 600;">⏱ ' + txtT + '</span>' : '') +
+        (soloPremiados ? ' <span style="color: #f59e0b; font-weight: 600;">(Solo Premiados)</span>' : '');
+
+      var out = '';
+      for(var k=0; k<res.length; k++){
+        var item = res[k], l = item.libro, orig = item.idx;
+        var cov = l.cover || 'covers/default.jpg';
+        var d = fmtDur(l.duration);
+        var s = (l.series||'').trim();
+        var prBadge = (l.award||l.awards||'').trim();
+
+        out += '<div class="card" onclick="abrir('+orig+')">';
+        out += '  <div class="cover-wrapper">';
+        if(prBadge){
+          out += '<div style="position: absolute; top: 8px; right: 8px; background: rgba(245, 158, 11, 0.95); color: #000; font-size: 11px; font-weight: bold; padding: 2px 7px; border-radius: 4px; z-index: 2;">'+(prBadge.indexOf('🏆')!==-1?prBadge:'🏆 '+prBadge)+'</div>';
+        }
+        out += '    <img src="'+cov+'" alt="'+(l.title||'')+'" onerror="this.parentElement.innerHTML=\'<div class=\\\'placeholder-cover\\\'><span>🎧</span><div>Sin portada</div></div>\'" loading="lazy">';
+        out += '  </div>';
+        out += '  <div class="card-body">';
+        out += '    <div class="title" title="'+(l.title||'')+'">'+(l.title||'Sin título')+'</div>';
+        out += '    <div class="author">'+(l.author||'Autor desconocido')+'</div>';
+        if(!s || s.toLowerCase()==='independiente'){
+          out += '    <div class="series" style="opacity: 0.7; font-style: italic;">Novela autoconclusiva</div>';
+        } else {
+          out += '    <div class="series">'+s+'</div>';
+        }
+        if(d){
+          out += '    <div class="badge-duracion">⏱ '+d+'</div>';
+        }
+        out += '  </div></div>';
+      }
+      if(!res.length){
+        out = '<div style="grid-column: 1/-1; padding: 50px; text-align: center; color: var(--text-muted);">No se encontraron audiolibros con los filtros seleccionados.</div>';
+      }
+      grid.innerHTML = out;
     }
-    totalS += (parseFloat(b.duration) || 0);
-    res.push({ libro: b, idx: i });
-  }
 
-  res.sort(function(a, b) {
-    var la = a.libro, lb = b.libro;
-    if (ord === 'author') return (la.author || '').localeCompare(lb.author || '');
-    if (ord === 'award') {
-      var pa = (la.award || la.awards || '').trim() ? 1 : 0;
-      var pb = (lb.award || lb.awards || '').trim() ? 1 : 0;
-      if (pa !== pb) return pb - pa;
-      return (la.title || '').localeCompare(lb.title || '');
+    function abrir(idx){
+      var l = DATOS_AUDIOLIBROS[idx];
+      if(!l) return;
+      document.getElementById('modalTitle').textContent = l.title || 'Sin título';
+      var d = l.duration ? ' · ⏱ ' + fmtDur(l.duration) : '';
+      var s = (!l.series || l.series.trim().toLowerCase()==='independiente') ? 'Novela autoconclusiva' : 'Saga: ' + l.series;
+      document.getElementById('modalSub').textContent = (l.author||'Autor desconocido') + ' | ' + s + d;
+      
+      var maw = document.getElementById('modalAward');
+      var pr = (l.award||l.awards||'').trim();
+      if(pr){
+        maw.textContent = pr.indexOf('🏆')!==-1 ? pr : '🏆 ' + pr;
+        maw.style.display = 'block';
+      } else {
+        maw.style.display = 'none';
+      }
+
+      document.getElementById('modalSummary').textContent = l.summary || l.description || 'Sin descripción disponible.';
+      var mtags = document.getElementById('modalTags');
+      mtags.innerHTML = '';
+      var gl = l.genres||[]; if(typeof gl==='string') gl=[gl];
+      for(var g=0; g<gl.length; g++){
+        var sp = document.createElement('span'); sp.className = 'modal-tag'; sp.textContent = gl[g]; mtags.appendChild(sp);
+      }
+      document.getElementById('modalOverlay').style.display = 'flex';
     }
-    if (ord === 'duration_desc') return (parseFloat(lb.duration) || 0) - (parseFloat(la.duration) || 0);
-    if (ord === 'duration_asc') return (parseFloat(la.duration) || 0) - (parseFloat(lb.duration) || 0);
-    return (la.title || '').localeCompare(lb.title || '');
-  });
 
-  if (stats) {
-    var ts = formatearDuracionTotal(totalS);
-    stats.innerHTML = '<strong>' + res.length + '</strong> de ' + DATOS_AUDIOLIBROS.length + ' audiolibros' +
-      (ts ? ' <span style="margin: 0 6px; opacity: 0.5;">•</span> <span style="color: #38bdf8; font-weight: 600;">⏱ ' + ts + '</span>' : '') +
-      (soloPremiados ? ' <span style="color: #f59e0b; font-weight: 600;">(Solo Premiados)</span>' : '');
-  }
+    function cerrar(){ document.getElementById('modalOverlay').style.display = 'none'; }
 
-  if (!grid) return;
-  var out = '';
-  for (var k = 0; k < res.length; k++) {
-    var it = res[k], l = it.libro, orig = it.idx;
-    var cov = l.cover || 'covers/default.jpg',
-        prItem = (l.award || l.awards || '').trim(),
-        dur = formatearDuracion(l.duration),
-        sVal = (l.series || '').trim();
-    out += '<div class="card" onclick="abrirModalLibro(' + orig + ')">';
-    out += '  <div class="cover-wrapper">';
-    if (prItem) {
-      out += '<div style="position: absolute; top: 8px; right: 8px; background: rgba(245, 158, 11, 0.95); color: #000; font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 4px; z-index: 2;">' + (prItem.indexOf('🏆') !== -1 ? prItem : '🏆 ' + prItem) + '</div>';
-    }
-    out += '    <img src="' + cov + '" alt="' + (l.title || '') + '" onerror="this.parentElement.innerHTML=\'<div class=\\\'placeholder-cover\\\'><span>🎧</span><div>Sin portada</div></div>\'" loading="lazy">';
-    out += '  </div>';
-    out += '  <div class="card-body">';
-    out += '    <div class="title" title="' + (l.title || '') + '">' + (l.title || 'Sin titulo') + '</div>';
-    out += '    <div class="author">' + (l.author || 'Autor desconocido') + '</div>';
-    if (!sVal || sVal.toLowerCase() === 'independiente') {
-      out += '    <div class="series" style="opacity: 0.75; font-style: italic;">Novela autoconclusiva</div>';
-    } else {
-      out += '    <div class="series">' + sVal + '</div>';
-    }
-    if (dur) {
-      out += '    <div style="display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 2px 8px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⏱ ' + dur + '</div>';
-    }
-    out += '  </div></div>';
-  }
-  if (res.length === 0) {
-    out = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-muted, #888);">No se encontraron audiolibros.</div>';
-  }
-  grid.innerHTML = out;
-}
-
-window.filtrarCatalogo = renderizarCatalogo;
-
-function inicializarTodo() {
-  poblarSelectores();
-  renderizarCatalogo();
-  var inp = document.getElementById('searchInput');
-  if (inp) inp.oninput = renderizarCatalogo;
-  var selS = document.getElementById('sagaSel');
-  if (selS) selS.onchange = renderizarCatalogo;
-  var selG = document.getElementById('genreSelect');
-  if (selG) selG.onchange = renderizarCatalogo;
-  var selSo = document.getElementById('sortSelect');
-  if (selSo) selSo.onchange = renderizarCatalogo;
-  var btnP = document.getElementById('filterAwardBtn');
-  if (btnP) btnP.onclick = window.togglePremiados;
-  var btnC = document.getElementById('modalClose');
-  if (btnC) btnC.onclick = window.cerrarModal;
-  var ov = document.getElementById('modalOverlay');
-  if (ov) {
-    ov.onclick = function(e) {
-      if (e.target === ov) window.cerrarModal();
-    };
-  }
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', inicializarTodo);
-} else {
-  inicializarTodo();
-}
-setTimeout(inicializarTodo, 150);
-setTimeout(inicializarTodo, 600);
-
+    document.addEventListener('DOMContentLoaded', function(){
+      poblar();
+      render();
+      document.getElementById('searchInput').oninput = render;
+      document.getElementById('authorSelect').onchange = render;
+      document.getElementById('sagaSel').onchange = render;
+      document.getElementById('genreSelect').onchange = render;
+      document.getElementById('sortSelect').onchange = render;
+      document.getElementById('modalClose').onclick = cerrar;
+      document.getElementById('modalOverlay').onclick = function(e){ if(e.target === this) cerrar(); };
+      document.getElementById('filterAwardBtn').onclick = function(){
+        soloPremiados = !soloPremiados;
+        this.style.background = soloPremiados ? 'rgba(245, 158, 11, 0.25)' : '';
+        this.style.borderColor = soloPremiados ? '#f59e0b' : '';
+        this.style.color = soloPremiados ? '#f59e0b' : '';
+        render();
+      };
+    });
   </script>
 </body>
 </html>
