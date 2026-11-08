@@ -135,163 +135,207 @@
       <div id="modalNarrators" class="modal-narrators-list"></div>
     </div>
   </div>
-  <script src="catalogo_datos.js?v=1793826224"></script>
+  <script src="catalogo_datos.js?v=1794156272"></script>
   <script>
 var soloPremiados = false;
 
-function normalizarTexto(txt) {
-  return (txt || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+function normalizarTexto(t) {
+  return (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
 
-function formatearDuracion(segundos) {
-  var s = parseFloat(segundos);
-  if (!s || isNaN(s) || s <= 0) return '';
-  var hrs = Math.floor(s / 3600);
-  var min = Math.floor((s % 3600) / 60);
-  if (hrs > 0) return hrs + ' h ' + (min > 0 ? min + ' min' : '');
-  return min + ' min';
+function formatearDuracion(s) {
+  var n = parseFloat(s);
+  if (!n || isNaN(n) || n <= 0) return '';
+  var h = Math.floor(n / 3600);
+  var m = Math.floor((n % 3600) / 60);
+  if (h > 0) return h + ' h ' + (m > 0 ? m + ' min' : '');
+  return m + ' min';
 }
 
-function formatearDuracionTotal(segundos) {
-  var s = parseFloat(segundos);
-  if (!s || isNaN(s) || s <= 0) return '';
-  var dias = Math.floor(s / 86400);
-  var horas = Math.floor((s % 86400) / 3600);
-  if (dias > 0) return dias + ' días y ' + horas + ' horas';
-  return horas + ' horas';
+function formatearDuracionTotal(s) {
+  var n = parseFloat(s);
+  if (!n || isNaN(n) || n <= 0) return '';
+  var d = Math.floor(n / 86400);
+  var h = Math.floor((n % 86400) / 3600);
+  if (d > 0) return d + ' dias y ' + h + ' horas';
+  return h + ' horas';
 }
 
 function poblarSelectores() {
   if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS.length) return;
 
-  var selSaga = document.getElementById('sagaSel');
-  if (selSaga && selSaga.options.length <= 1) {
-    var sagas = new Set();
-    for (var i = 0; i < DATOS_AUDIOLIBROS.length; i++) {
-      var s = (DATOS_AUDIOLIBROS[i].series || '').trim();
-      if (s && s.toLowerCase() !== 'independiente') sagas.add(s);
+  var elVers = null;
+  var cand = document.querySelectorAll('button, .tab, .filter-tab, a, div');
+  for (var c = 0; c < cand.length; c++) {
+    var tx = (cand[c].textContent || '').toLowerCase().trim();
+    if (tx.indexOf('varias versiones') !== -1 || (tx.indexOf('versiones') !== -1 && cand[c].children.length === 0)) {
+      elVers = cand[c];
+      break;
     }
-    var actualSaga = selSaga.value;
-    selSaga.innerHTML = '<option value="">Todas las sagas</option>';
-    var arrSagas = Array.from(sagas).sort(function(a, b) { return a.localeCompare(b); });
-    for (var j = 0; j < arrSagas.length; j++) {
-      var optS = document.createElement('option');
-      optS.value = arrSagas[j];
-      optS.textContent = arrSagas[j];
-      selSaga.appendChild(optS);
-    }
-    if (actualSaga) selSaga.value = actualSaga;
   }
 
-  var selGenre = document.getElementById('genreSelect');
-  if (selGenre && selGenre.options.length <= 1) {
-    var generos = new Set();
-    for (var k = 0; k < DATOS_AUDIOLIBROS.length; k++) {
-      var gList = DATOS_AUDIOLIBROS[k].genres || [];
-      if (typeof gList === 'string') gList = [gList];
-      for (var gi = 0; gi < gList.length; gi++) {
-        var gItem = (gList[gi] || '').trim();
-        if (gItem) generos.add(gItem);
+  var selA = document.getElementById('authorSelect');
+  if (!selA) {
+    selA = document.createElement('select');
+    selA.id = 'authorSelect';
+    var ref = document.getElementById('sagaSel') || document.getElementById('genreSelect');
+    if (ref) {
+      selA.className = ref.className;
+      selA.style.cssText = ref.style.cssText;
+    } else {
+      selA.style.padding = '8px 12px';
+      selA.style.borderRadius = '8px';
+      selA.style.background = '#1e293b';
+      selA.style.color = '#f8fafc';
+      selA.style.border = '1px solid rgba(255,255,255,0.2)';
+      selA.style.fontSize = '0.9rem';
+      selA.style.outline = 'none';
+      selA.style.cursor = 'pointer';
+    }
+
+    if (elVers && elVers.parentNode) {
+      elVers.parentNode.replaceChild(selA, elVers);
+    } else {
+      var cont = document.querySelector('.filters') || document.querySelector('.controls') || (document.getElementById('sagaSel') ? document.getElementById('sagaSel').parentElement : null);
+      if (cont) cont.insertBefore(selA, cont.firstChild);
+    }
+  }
+
+  if (selA && selA.options.length <= 1) {
+    var auts = new Set();
+    for (var a = 0; a < DATOS_AUDIOLIBROS.length; a++) {
+      var au = (DATOS_AUDIOLIBROS[a].author || '').trim();
+      if (au && au.toLowerCase() !== 'desconocido') auts.add(au);
+    }
+    var actA = selA.value;
+    selA.innerHTML = '<option value="">Todos los autores</option>';
+    var listaAutores = Array.from(auts).sort(function(x, y) { return x.localeCompare(y); });
+    for (var i = 0; i < listaAutores.length; i++) {
+      var opt = document.createElement('option');
+      opt.value = listaAutores[i];
+      opt.textContent = listaAutores[i];
+      selA.appendChild(opt);
+    }
+    if (actA) selA.value = actA;
+    selA.onchange = renderizarCatalogo;
+  }
+
+  var selS = document.getElementById('sagaSel');
+  if (selS && selS.options.length <= 1) {
+    var sags = new Set();
+    for (var j = 0; j < DATOS_AUDIOLIBROS.length; j++) {
+      var s = (DATOS_AUDIOLIBROS[j].series || '').trim();
+      if (s && s.toLowerCase() !== 'independiente') sags.add(s);
+    }
+    var actS = selS.value;
+    selS.innerHTML = '<option value="">Todas las sagas</option>';
+    var listaSagas = Array.from(sags).sort(function(x, y) { return x.localeCompare(y); });
+    for (var k = 0; k < listaSagas.length; k++) {
+      var optS = document.createElement('option');
+      optS.value = listaSagas[k];
+      optS.textContent = listaSagas[k];
+      selS.appendChild(optS);
+    }
+    if (actS) selS.value = actS;
+  }
+
+  var selG = document.getElementById('genreSelect');
+  if (selG && selG.options.length <= 1) {
+    var gens = new Set();
+    for (var m = 0; m < DATOS_AUDIOLIBROS.length; m++) {
+      var gl = DATOS_AUDIOLIBROS[m].genres || [];
+      if (typeof gl === 'string') gl = [gl];
+      for (var gi = 0; gi < gl.length; gi++) {
+        var it = (gl[gi] || '').trim();
+        if (it) gens.add(it);
       }
     }
-    var actualGenre = selGenre.value;
-    selGenre.innerHTML = '<option value="">Todos los géneros</option>';
-    var arrGen = Array.from(generos).sort(function(a, b) { return a.localeCompare(b); });
-    for (var m = 0; m < arrGen.length; m++) {
+    var actG = selG.value;
+    selG.innerHTML = '<option value="">Todos los generos</option>';
+    var listaGeneros = Array.from(gens).sort(function(x, y) { return x.localeCompare(y); });
+    for (var g = 0; g < listaGeneros.length; g++) {
       var optG = document.createElement('option');
-      optG.value = arrGen[m];
-      optG.textContent = arrGen[m];
-      selGenre.appendChild(optG);
+      optG.value = listaGeneros[g];
+      optG.textContent = listaGeneros[g];
+      selG.appendChild(optG);
     }
-    if (actualGenre) selGenre.value = actualGenre;
+    if (actG) selG.value = actG;
   }
 
-  var selSort = document.getElementById('sortSelect');
-  if (selSort && !selSort.querySelector('option[value="duration_desc"]')) {
-    var opt1 = document.createElement('option');
-    opt1.value = 'duration_desc';
-    opt1.textContent = 'Duración: Mayor a Menor';
-    selSort.appendChild(opt1);
+  var selSo = document.getElementById('sortSelect');
+  if (selSo && !selSo.querySelector('option[value="duration_desc"]')) {
+    var o1 = document.createElement('option');
+    o1.value = 'duration_desc';
+    o1.textContent = 'Duracion: Mayor a Menor';
+    selSo.appendChild(o1);
 
-    var opt2 = document.createElement('option');
-    opt2.value = 'duration_asc';
-    opt2.textContent = 'Duración: Menor a Mayor';
-    selSort.appendChild(opt2);
+    var o2 = document.createElement('option');
+    o2.value = 'duration_asc';
+    o2.textContent = 'Duracion: Menor a Mayor';
+    selSo.appendChild(o2);
   }
 }
 
-window.abrirModalLibro = function(index) {
-  if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS[index]) return;
-  var libro = DATOS_AUDIOLIBROS[index];
-  
-  var overlay = document.getElementById('modalOverlay');
-  var mTitle = document.getElementById('modalTitle');
-  var mAuthor = document.getElementById('modalAuthor');
-  var mSeries = document.getElementById('modalSeries');
-  var mSummary = document.getElementById('modalSummary');
-  var mTags = document.getElementById('modalTags');
-  var mAward = document.getElementById('modalAward');
-  
-  if (mTitle) mTitle.textContent = libro.title || 'Sin título';
-  if (mAuthor) {
-    var dur = libro.duration ? ' · ⏱ ' + formatearDuracion(libro.duration) : '';
-    mAuthor.textContent = (libro.author || 'Autor desconocido') + dur;
+window.abrirModalLibro = function(idx) {
+  if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS[idx]) return;
+  var lib = DATOS_AUDIOLIBROS[idx];
+  var over = document.getElementById('modalOverlay');
+  var mT = document.getElementById('modalTitle'),
+      mA = document.getElementById('modalAuthor'),
+      mS = document.getElementById('modalSeries'),
+      mSum = document.getElementById('modalSummary'),
+      mAw = document.getElementById('modalAward'),
+      mTa = document.getElementById('modalTags');
+  if (mT) mT.textContent = lib.title || 'Sin titulo';
+  if (mA) {
+    var d = lib.duration ? ' · ⏱ ' + formatearDuracion(lib.duration) : '';
+    mA.textContent = (lib.author || 'Autor desconocido') + d;
   }
-  if (mSeries) {
-    var esIndependiente = !libro.series || libro.series.trim().toLowerCase() === 'independiente';
-    mSeries.textContent = esIndependiente ? 'Novela autoconclusiva' : 'Saga: ' + libro.series;
-    mSeries.style.display = 'block';
+  if (mS) {
+    var ind = !lib.series || lib.series.trim().toLowerCase() === 'independiente';
+    mS.textContent = ind ? 'Novela autoconclusiva' : 'Saga: ' + lib.series;
+    mS.style.display = 'block';
   }
-  if (mSummary) {
-    mSummary.textContent = libro.summary || libro.description || 'Sin descripción disponible.';
+  if (mSum) mSum.textContent = lib.summary || lib.description || 'Sin descripcion disponible.';
+  if (mAw) {
+    var pr = lib.award || lib.awards || '';
+    mAw.textContent = pr ? (pr.indexOf('🏆') !== -1 ? pr : '🏆 ' + pr) : '';
+    mAw.style.display = pr ? 'block' : 'none';
   }
-  if (mAward) {
-    var textoPremio = libro.award || libro.awards || '';
-    mAward.textContent = textoPremio ? (textoPremio.indexOf('🏆') !== -1 ? textoPremio : '🏆 ' + textoPremio) : '';
-    mAward.style.display = textoPremio ? 'block' : 'none';
-  }
-  if (mTags) {
-    mTags.innerHTML = '';
-    var generos = libro.genres || [];
-    if (typeof generos === 'string') generos = [generos];
-    for (var g = 0; g < generos.length; g++) {
-      var tag = document.createElement('span');
-      tag.className = 'tag';
-      tag.textContent = generos[g];
-      mTags.appendChild(tag);
+  if (mTa) {
+    mTa.innerHTML = '';
+    var gen = lib.genres || [];
+    if (typeof gen === 'string') gen = [gen];
+    for (var g = 0; g < gen.length; g++) {
+      var tg = document.createElement('span');
+      tg.className = 'tag';
+      tg.textContent = gen[g];
+      mTa.appendChild(tg);
     }
   }
-
-  if (overlay) {
-    overlay.style.display = 'flex';
-    overlay.classList.add('active');
+  if (over) {
+    over.style.display = 'flex';
+    over.classList.add('active');
   }
 };
 
 window.cerrarModal = function() {
-  var overlay = document.getElementById('modalOverlay');
-  if (overlay) {
-    overlay.style.display = 'none';
-    overlay.classList.remove('active');
+  var over = document.getElementById('modalOverlay');
+  if (over) {
+    over.style.display = 'none';
+    over.classList.remove('active');
   }
 };
 
 window.togglePremiados = function() {
   soloPremiados = !soloPremiados;
-  var btnPremio = document.getElementById('filterAwardBtn');
-  if (btnPremio) {
-    btnPremio.classList.toggle('active', soloPremiados);
-    if (soloPremiados) {
-      btnPremio.style.borderColor = '#f59e0b';
-      btnPremio.style.color = '#f59e0b';
-      btnPremio.style.background = 'rgba(245, 158, 11, 0.25)';
-      btnPremio.style.fontWeight = 'bold';
-    } else {
-      btnPremio.style.borderColor = '';
-      btnPremio.style.color = '';
-      btnPremio.style.background = '';
-      btnPremio.style.fontWeight = '';
-    }
+  var btn = document.getElementById('filterAwardBtn');
+  if (btn) {
+    btn.classList.toggle('active', soloPremiados);
+    btn.style.borderColor = soloPremiados ? '#f59e0b' : '';
+    btn.style.color = soloPremiados ? '#f59e0b' : '';
+    btn.style.background = soloPremiados ? 'rgba(245, 158, 11, 0.25)' : '';
+    btn.style.fontWeight = soloPremiados ? 'bold' : '';
   }
   renderizarCatalogo();
 };
@@ -299,129 +343,98 @@ window.togglePremiados = function() {
 function renderizarCatalogo() {
   var grid = document.getElementById('audiobookGrid') || document.querySelector('.grid');
   var stats = document.getElementById('stats');
-  
   if (typeof DATOS_AUDIOLIBROS === 'undefined' || !DATOS_AUDIOLIBROS.length) {
     if (stats) stats.textContent = 'Cargando biblioteca...';
     return;
   }
-
-  var inputBusqueda = document.getElementById('searchInput');
-  var selSaga = document.getElementById('sagaSel');
-  var selGenre = document.getElementById('genreSelect');
-  var selSort = document.getElementById('sortSelect');
-  
-  var q = inputBusqueda ? normalizarTexto(inputBusqueda.value) : '';
-  var sagaFiltro = selSaga ? selSaga.value : '';
-  var generoFiltro = selGenre ? selGenre.value : '';
-  var criterioOrden = selSort && selSort.value ? selSort.value : 'title';
-
-  var filtrados = [];
-  var duracionTotal = 0;
-  
-  for (var idx = 0; idx < DATOS_AUDIOLIBROS.length; idx++) {
-    var b = DATOS_AUDIOLIBROS[idx];
-    
-    var premio = (b.award || b.awards || '').trim();
-    if (soloPremiados && !premio) continue;
-
-    var s = (b.series || '').trim();
-    if (sagaFiltro && s !== sagaFiltro) continue;
-
-    if (generoFiltro) {
-      var gList = b.genres || [];
-      if (typeof gList === 'string') gList = [gList];
-      var tieneGenero = false;
-      for (var gi = 0; gi < gList.length; gi++) {
-        if ((gList[gi] || '').trim() === generoFiltro) { tieneGenero = true; break; }
+  var inp = document.getElementById('searchInput');
+  var selA = document.getElementById('authorSelect'),
+      selS = document.getElementById('sagaSel'),
+      selG = document.getElementById('genreSelect'),
+      selSo = document.getElementById('sortSelect');
+  var q = inp ? normalizarTexto(inp.value) : '';
+  var fA = selA ? selA.value : '',
+      fS = selS ? selS.value : '',
+      fG = selG ? selG.value : '',
+      ord = (selSo && selSo.value) ? selSo.value : 'title';
+  var res = [], totalS = 0;
+  for (var i = 0; i < DATOS_AUDIOLIBROS.length; i++) {
+    var b = DATOS_AUDIOLIBROS[i];
+    var pr = (b.award || b.awards || '').trim();
+    if (soloPremiados && !pr) continue;
+    if (fA && (b.author || '').trim() !== fA) continue;
+    var sg = (b.series || '').trim();
+    if (fS && sg !== fS) continue;
+    if (fG) {
+      var gl = b.genres || [];
+      if (typeof gl === 'string') gl = [gl];
+      var hasG = false;
+      for (var gi = 0; gi < gl.length; gi++) {
+        if ((gl[gi] || '').trim() === fG) { hasG = true; break; }
       }
-      if (!tieneGenero) continue;
+      if (!hasG) continue;
     }
-
     if (q) {
-      var t = normalizarTexto(b.title);
-      var a = normalizarTexto(b.author);
-      var sag = normalizarTexto(b.series);
-      var sum = normalizarTexto(b.summary || b.description || '');
-      if (t.indexOf(q) === -1 && a.indexOf(q) === -1 && sag.indexOf(q) === -1 && sum.indexOf(q) === -1) {
-        continue;
-      }
+      var str = normalizarTexto(b.title) + ' ' + normalizarTexto(b.author) + ' ' + normalizarTexto(b.series) + ' ' + normalizarTexto(b.summary || b.description || '');
+      if (str.indexOf(q) === -1) continue;
     }
-
-    var durSeg = parseFloat(b.duration) || 0;
-    duracionTotal += durSeg;
-    filtrados.push({ libro: b, originalIndex: idx });
+    totalS += (parseFloat(b.duration) || 0);
+    res.push({ libro: b, idx: i });
   }
 
-  filtrados.sort(function(a, b) {
-    var la = a.libro;
-    var lb = b.libro;
-    
-    if (criterioOrden === 'author') {
-      return (la.author || '').localeCompare(lb.author || '');
-    }
-    if (criterioOrden === 'award') {
-      var tieneA = (la.award || la.awards || '').trim() ? 1 : 0;
-      var tieneB = (lb.award || lb.awards || '').trim() ? 1 : 0;
-      if (tieneA !== tieneB) return tieneB - tieneA;
+  res.sort(function(a, b) {
+    var la = a.libro, lb = b.libro;
+    if (ord === 'author') return (la.author || '').localeCompare(lb.author || '');
+    if (ord === 'award') {
+      var pa = (la.award || la.awards || '').trim() ? 1 : 0;
+      var pb = (lb.award || lb.awards || '').trim() ? 1 : 0;
+      if (pa !== pb) return pb - pa;
       return (la.title || '').localeCompare(lb.title || '');
     }
-    if (criterioOrden === 'duration_desc') {
-      return (parseFloat(lb.duration) || 0) - (parseFloat(la.duration) || 0);
-    }
-    if (criterioOrden === 'duration_asc') {
-      return (parseFloat(la.duration) || 0) - (parseFloat(lb.duration) || 0);
-    }
+    if (ord === 'duration_desc') return (parseFloat(lb.duration) || 0) - (parseFloat(la.duration) || 0);
+    if (ord === 'duration_asc') return (parseFloat(la.duration) || 0) - (parseFloat(lb.duration) || 0);
     return (la.title || '').localeCompare(lb.title || '');
   });
 
   if (stats) {
-    var tiempoStr = formatearDuracionTotal(duracionTotal);
-    stats.innerHTML = '<strong>' + filtrados.length + '</strong> de ' + DATOS_AUDIOLIBROS.length + ' audiolibros' + 
-      (tiempoStr ? ' <span style="margin: 0 6px; opacity: 0.5;">•</span> <span style="color: #38bdf8; font-weight: 600;">⏱ ' + tiempoStr + '</span>' : '') + 
+    var ts = formatearDuracionTotal(totalS);
+    stats.innerHTML = '<strong>' + res.length + '</strong> de ' + DATOS_AUDIOLIBROS.length + ' audiolibros' +
+      (ts ? ' <span style="margin: 0 6px; opacity: 0.5;">•</span> <span style="color: #38bdf8; font-weight: 600;">⏱ ' + ts + '</span>' : '') +
       (soloPremiados ? ' <span style="color: #f59e0b; font-weight: 600;">(Solo Premiados)</span>' : '');
   }
 
   if (!grid) return;
-
-  var html = '';
-  for (var i = 0; i < filtrados.length; i++) {
-    var item = filtrados[i];
-    var libro = item.libro;
-    var origIdx = item.originalIndex;
-    var portada = libro.cover || 'covers/default.jpg';
-    var premioItem = (libro.award || libro.awards || '').trim();
-    var dur = formatearDuracion(libro.duration);
-    var sVal = (libro.series || '').trim();
-    
-    html += '<div class="card" onclick="abrirModalLibro(' + origIdx + ')">';
-    html += '  <div class="cover-wrapper">';
-    if (premioItem) {
-      html += '    <div style="position: absolute; top: 8px; right: 8px; background: rgba(245, 158, 11, 0.95); color: #000; font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 4px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.4);">' + (premioItem.indexOf('🏆') !== -1 ? premioItem : '🏆 ' + premioItem) + '</div>';
+  var out = '';
+  for (var k = 0; k < res.length; k++) {
+    var it = res[k], l = it.libro, orig = it.idx;
+    var cov = l.cover || 'covers/default.jpg',
+        prItem = (l.award || l.awards || '').trim(),
+        dur = formatearDuracion(l.duration),
+        sVal = (l.series || '').trim();
+    out += '<div class="card" onclick="abrirModalLibro(' + orig + ')">';
+    out += '  <div class="cover-wrapper">';
+    if (prItem) {
+      out += '<div style="position: absolute; top: 8px; right: 8px; background: rgba(245, 158, 11, 0.95); color: #000; font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 4px; z-index: 2;">' + (prItem.indexOf('🏆') !== -1 ? prItem : '🏆 ' + prItem) + '</div>';
     }
-    html += '    <img src="' + portada + '" alt="' + (libro.title || '') + '" onerror="this.parentElement.innerHTML=\'<div class=\\\'placeholder-cover\\\'><span>🎧</span><div>Sin portada</div></div>\'" loading="lazy">';
-    html += '  </div>';
-    html += '  <div class="card-body">';
-    html += '    <div class="title" title="' + (libro.title || '') + '">' + (libro.title || 'Sin título') + '</div>';
-    html += '    <div class="author">' + (libro.author || 'Autor desconocido') + '</div>';
-    
+    out += '    <img src="' + cov + '" alt="' + (l.title || '') + '" onerror="this.parentElement.innerHTML=\'<div class=\\\'placeholder-cover\\\'><span>🎧</span><div>Sin portada</div></div>\'" loading="lazy">';
+    out += '  </div>';
+    out += '  <div class="card-body">';
+    out += '    <div class="title" title="' + (l.title || '') + '">' + (l.title || 'Sin titulo') + '</div>';
+    out += '    <div class="author">' + (l.author || 'Autor desconocido') + '</div>';
     if (!sVal || sVal.toLowerCase() === 'independiente') {
-      html += '    <div class="series" style="opacity: 0.75; font-style: italic;">Novela autoconclusiva</div>';
+      out += '    <div class="series" style="opacity: 0.75; font-style: italic;">Novela autoconclusiva</div>';
     } else {
-      html += '    <div class="series">' + sVal + '</div>';
+      out += '    <div class="series">' + sVal + '</div>';
     }
-    
     if (dur) {
-      html += '    <div style="display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 2px 8px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⏱ ' + dur + '</div>';
+      out += '    <div style="display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 2px 8px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⏱ ' + dur + '</div>';
     }
-    html += '  </div>';
-    html += '</div>';
+    out += '  </div></div>';
   }
-
-  if (filtrados.length === 0) {
-    html = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-muted, #888);">No se encontraron audiolibros con los filtros aplicados.</div>';
+  if (res.length === 0) {
+    out = '<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-muted, #888);">No se encontraron audiolibros.</div>';
   }
-
-  grid.innerHTML = html;
+  grid.innerHTML = out;
 }
 
 window.filtrarCatalogo = renderizarCatalogo;
@@ -429,35 +442,22 @@ window.filtrarCatalogo = renderizarCatalogo;
 function inicializarTodo() {
   poblarSelectores();
   renderizarCatalogo();
-  
-  var sea = document.getElementById('searchInput');
-  if (sea) sea.oninput = renderizarCatalogo;
-  
-  var selSaga = document.getElementById('sagaSel');
-  if (selSaga) selSaga.onchange = renderizarCatalogo;
-
-  var selGenre = document.getElementById('genreSelect');
-  if (selGenre) selGenre.onchange = renderizarCatalogo;
-
-  var selSort = document.getElementById('sortSelect');
-  if (selSort) selSort.onchange = renderizarCatalogo;
-
-  var btnPremio = document.getElementById('filterAwardBtn');
-  if (btnPremio) {
-    btnPremio.onclick = function() {
-      window.togglePremiados();
-    };
-  }
-
-  var btnCerrar = document.getElementById('modalClose');
-  if (btnCerrar) {
-    btnCerrar.onclick = window.cerrarModal;
-  }
-  
-  var overlay = document.getElementById('modalOverlay');
-  if (overlay) {
-    overlay.onclick = function(e) {
-      if (e.target === overlay) window.cerrarModal();
+  var inp = document.getElementById('searchInput');
+  if (inp) inp.oninput = renderizarCatalogo;
+  var selS = document.getElementById('sagaSel');
+  if (selS) selS.onchange = renderizarCatalogo;
+  var selG = document.getElementById('genreSelect');
+  if (selG) selG.onchange = renderizarCatalogo;
+  var selSo = document.getElementById('sortSelect');
+  if (selSo) selSo.onchange = renderizarCatalogo;
+  var btnP = document.getElementById('filterAwardBtn');
+  if (btnP) btnP.onclick = window.togglePremiados;
+  var btnC = document.getElementById('modalClose');
+  if (btnC) btnC.onclick = window.cerrarModal;
+  var ov = document.getElementById('modalOverlay');
+  if (ov) {
+    ov.onclick = function(e) {
+      if (e.target === ov) window.cerrarModal();
     };
   }
 }
